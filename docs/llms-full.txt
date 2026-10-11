@@ -75,7 +75,7 @@ INSTALL
 
 The installer copies the program into ~/.claude-accounts, makes the Start Menu shortcut, installs the VS Code extension and runs the self-check.
 
-Tests: powershell -ExecutionPolicy Bypass -File scripts\test.ps1 runs 32 engine tests and 16 extension tests. They use fake accounts and a mocked VS Code API.
+Tests: powershell -ExecutionPolicy Bypass -File scripts\test.ps1 runs 52 engine tests, 16 window tests and 45 extension checks. They use fake accounts, a hidden window and a mocked VS Code API.
 
 Uninstall: scripts/uninstall.ps1. Your saved logins are kept unless you ask to remove them.
 

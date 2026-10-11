@@ -8,8 +8,13 @@ node_modules/
 
 # guards: nothing from a real Claude login or from the app's data folder may ever be committed
 profiles/
+providers/
 backups/
+settings-backups/
 usage.json
+route.json
+.route.lock/
+settings.json
 login.log
 switch.journal
 doctor-cache.json

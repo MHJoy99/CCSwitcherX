@@ -1,15 +1,15 @@
 {
   "name": "claude-accounts",
   "displayName": "Claude Accounts (CCSwitcherX)",
-  "description": "Switch the Claude Code login between your saved accounts (for example Personal and Team) from the status bar, with each account's usage.",
-  "version": "1.1.0",
+  "description": "Switch what Claude Code uses from the status bar: your saved accounts (for example Personal and Team, with each account's usage) or a provider (another model gateway).",
+  "version": "1.2.0",
   "publisher": "local",
   "license": "MIT",
   "author": { "name": "MHJoy99", "url": "https://github.com/MHJoy99" },
   "homepage": "https://mhjoy99.github.io/CCSwitcherX/",
   "repository": { "type": "git", "url": "https://github.com/MHJoy99/CCSwitcherX.git" },
   "bugs": { "url": "https://github.com/MHJoy99/CCSwitcherX/issues" },
-  "keywords": ["claude", "claude code", "account switcher", "multiple accounts", "usage"],
+  "keywords": ["claude", "claude code", "account switcher", "multiple accounts", "usage", "provider", "gateway"],
   "private": true,
   "icon": "icon.png",
   "engines": { "vscode": "^1.94.0" },
@@ -19,7 +19,7 @@
   "main": "./extension.js",
   "contributes": {
     "commands": [
-      { "command": "claudeAccounts.switch", "title": "Switch account", "category": "Claude Accounts", "icon": "$(account)" },
+      { "command": "claudeAccounts.switch", "title": "Switch account or provider", "category": "Claude Accounts", "icon": "$(account)" },
       { "command": "claudeAccounts.add", "title": "Add account…", "category": "Claude Accounts" },
       { "command": "claudeAccounts.saveCurrent", "title": "Save current login…", "category": "Claude Accounts" },
       { "command": "claudeAccounts.openManager", "title": "Open manager window", "category": "Claude Accounts" },

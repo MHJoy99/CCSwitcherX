@@ -30,7 +30,7 @@ if (-not (Test-Path $pythonw)) { throw "pythonw.exe was not found next to $($pyt
 # 2. Program files only. profiles/, backups/, usage.json and the other saved data are never copied over or removed.
 Step "Copying program files to $AppDir"
 New-Item -ItemType Directory -Force -Path $AppDir | Out-Null
-foreach ($f in 'claude_accounts.py', 'claude_accounts_core.py', 'claude_accounts_gui.py', 'icon.ico', 'icon.png') {
+foreach ($f in 'claude_accounts.py', 'claude_accounts_core.py', 'claude_accounts_providers.py', 'claude_accounts_gui.py', 'icon.ico', 'icon.png') {
   Copy-Item -LiteralPath (Join-Path $repo "src\$f") -Destination $AppDir -Force
 }
 

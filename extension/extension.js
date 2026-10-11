@@ -48,6 +48,36 @@ function run(args, { timeout = 30000 } = {}) {
 
 const messageOf = (e) => (e && e.message) || String(e);
 
+// ---------------------------------------------------------------- providers
+// A provider is another model gateway (custom URL + key + model map). While one is in use no saved account is in use,
+// which is why an account counts as "in use" only when the engine says inUse (an older engine only knows `active`).
+const inUse = (p) => (p.inUse === undefined ? !!p.active : !!p.inUse);
+const activeProvider = () => {
+  const route = (state && state.route) || {};
+  const list = (state && state.providers) || [];
+  return list.find((p) => p.id === route.id) || list.find((p) => p.active) || null;
+};
+const SETTLE_SECONDS = 2;  // Claude Code follows a settings change from its next message, about 1.5 s later
+
+const TIERS = [['opus', 'Opus'], ['sonnet', 'Sonnet'], ['haiku', 'Haiku'], ['subagent', 'subagents']];
+// Tiers that share a model are listed together: [{ model, labels: ['Opus', 'Sonnet'] }, { model, labels: ['Haiku', 'subagents'] }].
+function modelGroups(models, tiers = TIERS) {
+  const groups = [];
+  for (const [key, label] of tiers) {
+    const model = models && models[key];
+    if (!model) continue;
+    const group = groups.find((g) => g.model === model);
+    if (group) group.labels.push(label); else groups.push({ model, labels: [label] });
+  }
+  return groups;
+}
+const modelsDetail = (m) => modelGroups(m).map((g) => `${g.labels.join(', ')} → ${g.model}`).join(' · ');
+function modelsTip(m) {
+  const parts = modelGroups(m, TIERS.slice(0, 3)).map((g) => `${g.labels.join('/')} → ${g.model}`);
+  if (m && m.subagent && m.subagent !== m.haiku) parts.push(`subagents → ${m.subagent}`);
+  return parts.join(', ');
+}
+
 // ---------------------------------------------------------------- status bar
 function render() {
   item.backgroundColor = undefined;
@@ -68,9 +98,31 @@ function render() {
     item.tooltip = 'Claude Accounts is starting…';
     return;
   }
-  const active = state.profiles.find((p) => p.active);
+  const route = state.route || { kind: 'account' };
+  if (route.kind === 'provider') {
+    const prov = activeProvider();
+    if (route.missing || !prov) {
+      item.text = '$(warning) Provider missing';
+      item.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+      tip.appendText(`Claude Code is set to use a provider${route.baseUrl ? ` (${route.baseUrl})` : ''} that is no longer saved here. Click, then pick an account to switch back.`);
+    } else {
+      item.text = `$(plug) ${prov.name}`;
+      tip.appendText(`Using provider ${prov.name} (${prov.host}); ${modelsTip(prov.models)}.`);
+      tip.appendText('\n\nYour Claude subscription is not used until you switch back.');
+      tip.appendText('\n\nClick to switch account or provider.');
+    }
+    item.tooltip = tip;
+    return;
+  }
+  if (route.kind === 'custom') {
+    item.text = '$(warning) Custom URL';
+    tip.appendText(`Claude Code is pointed at ${route.baseUrl} outside this app, so it is not one of your saved providers. Your accounts are listed on click, but switching one does not undo that URL.`);
+    item.tooltip = tip;
+    return;
+  }
+  const active = state.profiles.find(inUse);
   if (active) {
-    const soon = state.profiles.some((p) => !p.active && (p.expired || (p.daysLeft !== null && p.daysLeft < 5)));
+    const soon = state.profiles.some((p) => !inUse(p) && (p.expired || (p.daysLeft !== null && p.daysLeft < 5)));
     const u = active.usage;
     const session = u && !u.stale && u.session && !u.session.over ? ` · ${u.session.pct}%` : '';
     item.text = `$(account) ${active.name}${session}${soon ? ' $(warning)' : ''}`;
@@ -102,6 +154,8 @@ async function refresh() {
       const res = await run(['state']);
       if (res.ok === false) throw new Error(res.error);
       state = res;
+      if (!Array.isArray(state.providers)) state.providers = [];   // an engine from before providers
+      if (!state.route) state.route = { kind: 'account' };
       problem = null;
       lastRefresh = Date.now();
     } catch (e) {
@@ -180,9 +234,10 @@ async function saveCurrent() {
 }
 
 async function switchTo(p) {
-  if (busy || p.active) return;
+  if (busy || inUse(p)) return;
   busy = true;
   item.text = `$(sync~spin) Switching to ${p.name}…`;
+  let left = null;
   try {
     const res = await run(['switch', p.id], { timeout: 40000 });
     if (!res.ok) throw new Error(res.error);
@@ -192,6 +247,7 @@ async function switchTo(p) {
       vscode.window.showInformationMessage(`Your previous login was saved as "${res.autosaved}".`);
     }
     if (res.changed) confirmInBackground(p);
+    left = res.leftProvider || null;
   } catch (e) {
     log.appendLine(`[switch] ${messageOf(e)}`);
     vscode.window.showErrorMessage(`Claude Accounts: ${messageOf(e)}`);
@@ -199,6 +255,94 @@ async function switchTo(p) {
   } finally {
     busy = false;
   }
+  if (left) {  // switching to an account also leaves the provider that was in use
+    await settleNotice(`Switching to ${p.name}…`, SETTLE_SECONDS);
+    vscode.window.showInformationMessage(`Left provider "${left}". Using ${p.name} from your next message.`);
+  }
+}
+
+// Claude Code follows a settings change from its next message, about two seconds later; say so while that happens.
+function settleNotice(title, seconds) {
+  const ms = Math.min(Math.max(Number(seconds === undefined ? SETTLE_SECONDS : seconds) || 0, 0), 10) * 1000;
+  if (!ms) return Promise.resolve();
+  return vscode.window.withProgress(
+    { location: vscode.ProgressLocation.Notification, title },
+    () => new Promise((resolve) => setTimeout(resolve, ms)));
+}
+
+async function switchToProvider(prov) {
+  if (busy || prov.active) return;
+  busy = true;
+  item.text = `$(sync~spin) Switching to ${prov.name}…`;
+  let res = null;
+  try {
+    res = await run(['provider', 'use', prov.id], { timeout: 40000 });
+    if (!res.ok) throw new Error(res.error);
+    await refresh();  // the status bar now shows the provider
+  } catch (e) {
+    res = null;
+    log.appendLine(`[provider] ${messageOf(e)}`);
+    vscode.window.showErrorMessage(`Claude Accounts: ${messageOf(e)}`);
+    await refresh();
+  } finally {
+    busy = false;
+  }
+  if (!res) return;
+  const name = res.name || prov.name;
+  await settleNotice(`Switching to ${name}…`, res.settleSeconds);
+  vscode.window.showInformationMessage(`Using ${name} from your next message.`);
+}
+
+// Asks the engine to check every model of a provider with a real request (it takes a few seconds), then summarises.
+let testing = false;
+async function testProvider() {
+  if (testing) {
+    vscode.window.showInformationMessage('A provider test is already running.');
+    return;
+  }
+  const list = (state && state.providers) || [];
+  if (!list.length) {
+    vscode.window.showInformationMessage('No providers saved yet. Use "Add provider…" first.');
+    return;
+  }
+  const pick = await vscode.window.showQuickPick(list.map((p) => ({
+    label: `${p.active ? '$(check)' : '$(plug)'} ${p.name}`,
+    description: p.host,
+    detail: modelsDetail(p.models),
+    provider: p,
+  })), { title: 'Test provider', placeHolder: 'Which provider should be tested?', matchOnDescription: true });
+  if (!pick) return;
+  const prov = pick.provider;
+  testing = true;
+  try {
+    // exit code 1 still carries the per-model results on stdout, which run() hands back as a normal answer
+    const res = await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: `Testing ${prov.name}: asking each model to use a tool…`,
+    }, () => run(['provider', 'test', prov.id], { timeout: 10 * 60 * 1000 }));
+    if (!Array.isArray(res.results) || !res.results.length) throw new Error(res.error || 'The test returned no results.');
+    const rows = res.results.map((r) => {
+      const tiers = (r.tiers || []).map((t) => (TIERS.find((x) => x[0] === t) || [t, t])[1]).join(', ');
+      const who = `${r.model}${tiers ? ` (${tiers})` : ''}`;
+      return r.ok ? `✓ ${who} ${Number(r.seconds).toFixed(1)}s` : `✗ ${who}: ${r.detail}`;
+    });
+    if (res.results.every((r) => r.ok)) {
+      vscode.window.showInformationMessage(`Provider "${prov.name}" works. ${rows.join(' · ')}`);
+    } else {
+      vscode.window.showWarningMessage(`Provider "${prov.name}" has a problem. ${rows.join(' · ')}`);
+    }
+  } catch (e) {
+    log.appendLine(`[provider test] ${messageOf(e)}`);
+    vscode.window.showErrorMessage(`Claude Accounts: ${messageOf(e)}`);
+  } finally {
+    testing = false;
+  }
+}
+
+// Providers are set up in the Claude Accounts window (address, key and model map need a proper form).
+function addProvider() {
+  vscode.window.setStatusBarMessage('Opening the Claude Accounts window: add the provider there.', 6000);
+  openManager();
 }
 
 // The switch is already in effect. This only double-checks it stuck and that the claude tool agrees.
@@ -345,7 +489,7 @@ async function showPicker() {
   }
   const qp = vscode.window.createQuickPick();
   qp.title = 'Claude Accounts';
-  qp.placeholder = 'Choose the account Claude Code should use';
+  qp.placeholder = state.providers.length ? 'Choose the account or provider Claude Code should use' : 'Choose the account Claude Code should use';
   qp.matchOnDescription = true;
 
   const rowButtons = [
@@ -360,25 +504,39 @@ async function showPicker() {
   for (const p of state.profiles) {
     let detail = usageLine(p) || undefined;
     if (p.expired) detail = '$(error) Sign-in expired. Use "Add account…" to sign in again.';
-    else if (!p.active && p.daysLeft !== null && p.daysLeft < 7) {
+    else if (!inUse(p) && p.daysLeft !== null && p.daysLeft < 7) {
       const warn = `$(warning) Saved sign-in expires in ${Math.max(0, Math.floor(p.daysLeft))} day(s). Use it before then.`;
       detail = p.usage ? `${warn}   ${p.usage.text}` : warn;
     }
     items.push({
-      label: `${p.active ? '$(check)' : '$(account)'} ${p.name}`,
-      description: `${p.email} · ${p.detail}${p.active ? '  (in use)' : ''}`,
+      label: `${inUse(p) ? '$(check)' : '$(account)'} ${p.name}`,
+      description: `${p.email} · ${p.detail}${inUse(p) ? '  (in use)' : ''}`,
       detail,
       profile: p,
       buttons: rowButtons,
     });
   }
+  if (state.providers.length) {
+    items.push({ label: 'Providers', kind: vscode.QuickPickItemKind.Separator });
+    for (const prov of state.providers) {
+      const models = modelsDetail(prov.models);
+      items.push({
+        label: `${prov.active ? '$(check)' : '$(plug)'} ${prov.name}`,
+        description: `${prov.host}${prov.active ? '  (in use)' : ''}`,
+        detail: prov.keyOk === false ? `$(warning) No API key saved. ${models}` : models,
+        provider: prov,
+      });
+    }
+  }
   if (items.length) items.push({ label: '', kind: vscode.QuickPickItemKind.Separator });
   items.push({ label: '$(add) Add account…', action: 'add' });
+  items.push({ label: '$(add) Add provider…', description: 'set up in the Claude Accounts window', action: 'addProvider' });
+  if (state.providers.length) items.push({ label: '$(beaker) Test provider…', action: 'testProvider' });
   items.push({ label: '$(refresh) Refresh usage', action: 'usage' });
   items.push({ label: '$(window) Open manager window', action: 'manager' });
   items.push({ label: '$(pulse) Run self-check', action: 'doctor' });
   qp.items = items;
-  const current = items.find((i) => i.profile && i.profile.active);
+  const current = items.find((i) => (i.profile && inUse(i.profile)) || (i.provider && i.provider.active));
   if (current) qp.activeItems = [current];
 
   qp.onDidAccept(() => {
@@ -386,7 +544,10 @@ async function showPicker() {
     qp.hide();
     if (!sel) return;
     if (sel.profile) switchTo(sel.profile);
+    else if (sel.provider) switchToProvider(sel.provider);
     else if (sel.action === 'add') addAccount();
+    else if (sel.action === 'addProvider') addProvider();
+    else if (sel.action === 'testProvider') testProvider();
     else if (sel.action === 'save') saveCurrent();
     else if (sel.action === 'usage') {
       vscode.window.setStatusBarMessage('$(sync~spin) Refreshing usage…', 4000);
@@ -422,7 +583,15 @@ function activate(context) {
   );
 
   // Notice logins that change outside this window (another VS Code window, a terminal /login, the manager window).
-  const watched = [path.join(os.homedir(), '.claude.json'), path.join(os.homedir(), '.claude', '.credentials.json')];
+  // A provider switch (from a terminal or the manager window) rewrites Claude Code's settings.json and the engine's
+  // route.json, so those are watched too (editing the provider in use re-applies it through the same two files;
+  // the list of other providers is read whenever the picker opens).
+  const watched = [
+    path.join(os.homedir(), '.claude.json'),
+    path.join(os.homedir(), '.claude', '.credentials.json'),
+    path.join(os.homedir(), '.claude', 'settings.json'),
+    path.join(os.homedir(), '.claude-accounts', 'route.json'),
+  ];
   for (const file of watched) {
     fs.watchFile(file, { interval: 2000, persistent: false }, () => {
       if (!busy && Date.now() - lastRefresh > 2500) refresh();

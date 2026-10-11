@@ -27,7 +27,7 @@ from ctypes import wintypes
 from datetime import datetime
 from pathlib import Path
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 APP_DIR = Path(__file__).resolve().parent
 HOME = Path(os.environ.get("USERPROFILE") or Path.home())

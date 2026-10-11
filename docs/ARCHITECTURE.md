@@ -42,6 +42,7 @@ These are Claude Code's files. CCSwitcherX reads them, and writes only the keys 
 |---|---|---|---|
 | `~/.claude/.credentials.json` (`CREDS`) | OAuth tokens under key `claudeAiOauth`. Other keys (for example `mcpOAuth`) are kept as they are. | No, plain JSON | Claude Code; CCSwitcherX replaces `claudeAiOauth` (`claude_accounts_core.py: apply_login`) |
 | `~/.claude.json` (`CLAUDE_JSON`) | Account record under key `oauthAccount`. Also holds Claude Code's usage cache (`cachedUsageUtilization`) and other state. | No, plain JSON | Claude Code; CCSwitcherX replaces `oauthAccount` and removes `cachedExtraUsageDisabledReason` (`apply_login`) |
+| `~/.claude/settings.json` (`SETTINGS`) | Claude Code's settings. A provider writes only `env.ANTHROPIC_BASE_URL`, `env.ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU}_MODEL`, `env.CLAUDE_CODE_SUBAGENT_MODEL` and `apiKeyHelper` (see [Providers](#providers)). | No, plain JSON, never holds an API key | Claude Code and you; CCSwitcherX (`claude_accounts_providers.py: activate`, `deactivate`) |
 | `~/.claude/.oauth_refresh.lock/` (directory) | Claude Code's token-refresh lock. CCSwitcherX takes it while switching. | n/a | Claude Code and CCSwitcherX (`claude_accounts_core.py: claude_locks`) |
 | `~/.claude.lock/` (directory) | Lock for the `~/.claude` directory. | n/a | Claude Code and CCSwitcherX |
 | `~/.claude.json.lock/` (directory) | Lock for `~/.claude.json`. | n/a | Claude Code and CCSwitcherX |
@@ -59,7 +60,11 @@ All of these are under the app folder `~/.claude-accounts` (`STORE`), or `CA_STO
 
 | Path | Purpose | Encrypted |
 |---|---|---|
-| `~/.claude-accounts/claude_accounts.py`, `claude_accounts_core.py`, `claude_accounts_gui.py`, `icon.ico`, `icon.png` | Program files, copied by `scripts/install.ps1` | No |
+| `~/.claude-accounts/claude_accounts.py`, `claude_accounts_core.py`, `claude_accounts_providers.py`, `claude_accounts_gui.py`, `icon.ico`, `icon.png` | Program files, copied by `scripts/install.ps1` | No |
+| `~/.claude-accounts/providers/<id>.dat` | One saved provider: `name`, `baseUrl`, `apiKey`, `models` (`opus`, `sonnet`, `haiku`, `subagent`), `createdAt`, `updatedAt` (`add_provider`) | Yes, DPAPI |
+| `~/.claude-accounts/route.json` | What a provider changed in `settings.json`: the previous value of each managed key and what was written. Holds no secrets. Present only while a provider is in use. | No |
+| `~/.claude-accounts/settings-backups/<stamp>.dat` | Copy of `settings.json` taken before every provider change. The newest 10 are kept (`_backup_settings`). | Yes, DPAPI |
+| `~/.claude-accounts/.route.lock/` (directory) | Keeps two copies of the app from changing `settings.json` at the same time | n/a |
 | `~/.claude-accounts/profiles/<id>.dat` | One saved login: `name`, `createdAt`, `updatedAt`, `claudeAiOauth`, `oauthAccount` (`save_profile`) | Yes, DPAPI |
 | `~/.claude-accounts/backups/<YYYYmmdd-HHMMSS-ffffff>.dat` | Copy of the login that was active before a switch or an add. The newest 10 are kept (`backup_live`, `KEEP_BACKUPS`). | Yes, DPAPI |
 | `~/.claude-accounts/switch.journal` | `{"target": <id>, "at": <epoch seconds>}`, present only during a switch that has not finished (`switch_to`, `recover`). Holds no tokens. | No |
@@ -276,7 +281,10 @@ Without `--json`, the same commands print text. `list` prints one line per accou
 
 | State | Text | Click |
 |---|---|---|
-| Active account saved | `$(account) <name>` plus ` · <session %>` when the numbers are fresh and the window has not rolled over. A warning icon is added when another saved sign-in is expired or has under 5 days left. | Opens the picker (`claudeAccounts.switch`) |
+| Account in use (`inUse`) | `$(account) <name>` plus ` · <session %>` when the numbers are fresh and the window has not rolled over. A warning icon is added when another saved sign-in is expired or has under 5 days left. | Opens the picker (`claudeAccounts.switch`) |
+| Provider in use | `$(plug) <provider name>`, no usage percentage. The tooltip names the host and which model answers for Opus, Sonnet and Haiku, and says the Claude subscription is not used until you switch back. | Opens the picker |
+| Provider in use but no longer saved | `$(warning) Provider missing` | Opens the picker |
+| Base URL set outside this app | `$(warning) Custom URL`, with the URL in the tooltip | Opens the picker |
 | Login active but not saved | `$(warning) Claude: save this login` | Save it |
 | Not signed in | `$(sign-in) Claude: not signed in` | Add account |
 | Engine cannot run | `$(error) Claude Accounts` | Shows the log |
@@ -286,8 +294,9 @@ Without `--json`, the same commands print text. `list` prints one line per accou
 `extension.js: showPicker` opens a quick pick. It starts `usage` in the background first, then lists:
 
 - an unsaved login, if there is one, as "Save current login…";
-- each saved account, with its usage line. Expired sign-ins show "Sign-in expired". Other saved sign-ins with under 7 days left show a warning with the days left;
-- "Add account…", "Refresh usage", "Open manager window", "Run self-check".
+- each saved account, with its usage line. The account in use has the check mark (while a provider is in use, none does). Expired sign-ins show "Sign-in expired". Other saved sign-ins with under 7 days left show a warning with the days left;
+- if any providers are saved, a "Providers" separator and one row per provider: host, and "Opus, Sonnet → model · Haiku, subagents → model". The provider in use has the check mark. Picking one runs `provider use`, waits `settleSeconds` under a progress notification, then says "Using <name> from your next message." Picking an account while a provider is in use runs `switch`, which also leaves the provider;
+- "Add account…", "Add provider…" (opens the window, where providers are set up), "Test provider…" (only when a provider is saved: a second quick pick, then `provider test` under a progress notification and one message with a ✓ or ✗ per model), "Refresh usage", "Open manager window", "Run self-check".
 
 Each account row has Rename and Remove buttons.
 
@@ -297,7 +306,7 @@ Each account row has Rename and Remove buttons.
 |---|---|---|
 | `setInterval` `poll` | 60 s | Runs `state` (skipped while busy) |
 | `setInterval` `usagePoll` | 5 min | Runs `usage` unless the last one was less than 120 s ago |
-| `fs.watchFile` | 2 s | Watches `~/.claude.json` and `~/.claude/.credentials.json`. A change triggers `state` if the last refresh was more than 2.5 s ago. |
+| `fs.watchFile` | 2 s | Watches `~/.claude.json`, `~/.claude/.credentials.json`, `~/.claude/settings.json` and `~/.claude-accounts/route.json` (a provider switch from a terminal or the window rewrites the last two). A change triggers `state` if the last refresh was more than 2.5 s ago. |
 | Window focus | on focus | Runs `state` |
 | Startup | at activation | `state`, then `usage`, then a quiet `doctor` four seconds later |
 
@@ -332,7 +341,7 @@ Limitation: if no VS Code copy of Claude Code is found, the lock check passes wi
 
 **Engine tests** (`tests/test_core.py`). The file sets `CA_CLAUDE_DIR` and `CA_STORE` to a new temporary folder and sets `CA_NO_NETWORK=1` before it imports the engine. Fake accounts are built in code. The file has 32 test methods, covering DPAPI round trips, save, rename and remove, switch round trips, rotated tokens, autosave, the expired refusal, rollback after a failed second write, lock behaviour and more.
 
-**Extension tests** (`tests/test_extension.js`). `test.ps1` creates a sandbox with `tests/make_sandbox.py`, sets `CA_CLAUDE_DIR` and `CA_STORE` to folders in it, and runs the test. The test loads the real `extension/extension.js` with `Module._load` replaced, so `require('vscode')` returns a mock. The mock records messages and quick-pick items, and answers input boxes from preset values. The engine itself runs as a real Python subprocess against the sandbox, so Python must be on `PATH`. A full run reports 16 passed checks.
+**Extension tests** (`tests/test_extension.js`). `test.ps1` creates a sandbox with `tests/make_sandbox.py`, sets `CA_CLAUDE_DIR` and `CA_STORE` to folders in it, and runs the test. The test loads the real `extension/extension.js` with `Module._load` replaced, so `require('vscode')` returns a mock. The mock records messages and quick-pick items, and answers input boxes from preset values. The engine itself runs as a real Python subprocess against the sandbox, so Python must be on `PATH`. The test also starts a fake model gateway on localhost for the provider tests (`Test provider…` goes through it) and sets providers up by calling the engine. A full run reports 45 passed checks.
 
 If Node.js is not installed, `test.ps1` skips the extension tests and says so.
 
@@ -350,6 +359,39 @@ If Node.js is not installed, `test.ps1` skips the extension tests and says so.
 - **The lock check in doctor is a string search** of the newest VS Code binary. It cannot see a terminal-only install.
 - **A cancelled sign-in while signed out** can leave the new login active and unsaved (see [Add-account flow](#add-account-flow)).
 - **The lock protocol depends on Claude Code.** If Claude Code changes its lock names, switches may not be coordinated with its refreshes. The self-check is there to notice that.
+
+## Providers
+
+A provider points Claude Code at another model gateway. Code: `claude_accounts_providers.py`. Verified by `tests/test_providers.py`
+(19 sandbox tests) and, for the live behaviour, by running Claude Code against a real gateway in a sandbox config directory.
+
+**What it writes.** Only these keys of `settings.json`, in one atomic replace (`activate`):
+`env.ANTHROPIC_BASE_URL`, `env.ANTHROPIC_DEFAULT_OPUS_MODEL`, `..._SONNET_MODEL`, `..._HAIKU_MODEL`, `env.CLAUDE_CODE_SUBAGENT_MODEL`
+and `apiKeyHelper`, which is `"<python.exe>" -I "<app>\claude_accounts.py" key <provider id>`. Claude Code runs that command to get the
+key (printed to stdout only; the command refuses to run when stdout is a terminal), so the key is never in `settings.json`.
+Everything else in the file is preserved, including key order and indentation.
+
+**Why one atomic write matters.** With only `ANTHROPIC_BASE_URL` set and no credential variable or helper, Claude Code keeps using the
+saved claude.ai login and would send it to that URL (Claude Code docs, "Subscriptions and gateways"). The base URL and the helper therefore
+always land together, and activation is refused if `settings.json` already holds `ANTHROPIC_AUTH_TOKEN` or `ANTHROPIC_API_KEY`
+(they would override the helper).
+
+**Switching back.** `route.json` remembers the original value of every managed key (or that it was absent). `deactivate` restores them,
+but leaves a key alone if somebody changed it after we wrote it. Switching from one provider to another keeps the original values, not
+the first provider's. Switching to an account (`use_account`) switches the login first, then leaves the provider.
+
+**Safety.** Backup (encrypted) before every change; the file is read back and compared after writing, and the previous text is restored if
+it does not match; a `settings.json` that is not valid JSON is never written; a lock directory serialises writers; the route is judged
+from `settings.json` itself (`current_route`), not from our own bookkeeping, so a change made by hand is noticed.
+
+**Timing.** Claude Code watches its settings and applies edits to a running session; measured on 2.1.296 (2026-10-12) a change is picked
+up about 1.5 s after the file changes (0.7 s was too early once), so the apps wait `SETTLE_SECONDS` = 2 s before saying "ready". The next
+message uses the new model; an open chat keeps its history, and the new model re-reads it uncached.
+
+**Connection test.** `check_model` sends a tool request and then a second request that carries the first answer back (thinking blocks
+included), the way Claude Code does. A gateway that mishandles replayed thinking fails the second step: that is exactly how a missing
+`summary` field on replayed reasoning items in a gateway showed up (HTTP 400) with Muse Spark. The test uses a Claude Code user agent because
+gateways behind Cloudflare may refuse Python's default one.
 
 ## Credits
 

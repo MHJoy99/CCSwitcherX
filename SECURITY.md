@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Only the latest release receives security fixes. The current version is 1.1.0 (`__version__` in `src/claude_accounts_core.py`; `python claude_accounts.py --version` prints it). Update by running `git pull` and then `powershell -ExecutionPolicy Bypass -File scripts\install.ps1` again.
+Only the latest release receives security fixes. The current version is 1.2.0 (`__version__` in `src/claude_accounts_core.py`; `python claude_accounts.py --version` prints it). Update by running `git pull` and then `powershell -ExecutionPolicy Bypass -File scripts\install.ps1` again.
 
 ## Reporting a vulnerability
 

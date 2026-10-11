@@ -1,6 +1,6 @@
 # FAQ
 
-Short answers about CCSwitcherX. The first 13 questions are the canonical set and their answers are kept word for word; the last six are answered from the code (version 1.1.0).
+Short answers about CCSwitcherX. The first 13 questions are the canonical set and their answers are kept word for word; the last six are answered from the code (version 1.2.0).
 
 ## What is CCSwitcherX?
 

@@ -11,6 +11,11 @@ $failed = $false
 try {
   Write-Host '== engine tests (python)' -ForegroundColor Cyan
   python -I (Join-Path $repo 'tests\test_core.py'); if ($LASTEXITCODE -ne 0) { $failed = $true }
+  python -I (Join-Path $repo 'tests\test_providers.py'); if ($LASTEXITCODE -ne 0) { $failed = $true }
+  if (Test-Path (Join-Path $repo 'tests\test_gui_smoke.py')) {
+    Write-Host '== window tests (python, tkinter, window hidden)' -ForegroundColor Cyan
+    python -I (Join-Path $repo 'tests\test_gui_smoke.py'); if ($LASTEXITCODE -ne 0) { $failed = $true }
+  }
 
   if (Get-Command node -ErrorAction SilentlyContinue) {
     Write-Host '== extension tests (node, mocked VS Code)' -ForegroundColor Cyan

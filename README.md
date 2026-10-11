@@ -33,6 +33,10 @@ accounts, for example a personal Max plan and a work Team plan, in one click.** 
 typing "Claude Accounts" in the Windows search bar), a VS Code status-bar extension and a command line. You sign in to
 each account once; after that, switching takes a fraction of a second and nothing is typed or logged out.
 
+It can also point Claude Code at **another model provider** you already use, such as your own gateway with a custom
+URL, an API key and your own model map (for example Opus and Sonnet answered by one model and Haiku by another), and
+switch back to a Claude account the same way: one click, no restart.
+
 It only moves **your own login between your own accounts, on your own computer**. It is independent and unofficial:
 not affiliated with Anthropic. Claude and Claude Code are trademarks of Anthropic.
 
@@ -52,6 +56,9 @@ not affiliated with Anthropic. Claude and Claude Code are trademarks of Anthropi
 - **One-click switch.** A swap of two entries in Claude Code's login files measured 21 to 27 ms on a real machine.
 - **Usage for every account.** The 5-hour session and 7-day weekly percentages with reset times, per account.
 - **VS Code status bar.** `Personal · 64%` in the corner; click it to switch, add, rename or remove accounts.
+- **Providers (other models).** Save a gateway once (address, key, which model answers for Opus, Sonnet, Haiku and
+  subagents), then switch to it like an account. A built-in test checks every model, including a tool call followed by
+  a second step, which is where gateways most often break.
 - **Safe by design.** Logins are encrypted with Windows DPAPI, the current login is backed up before every switch,
   an interrupted switch is finished on the next start, and a failed write is rolled back.
 - **Your setup stays the same.** Skills, `CLAUDE.md`, memory, MCP logins and chat history are shared by every account.
@@ -82,6 +89,10 @@ update is safe. No VS Code or Node.js? Use `-SkipExtension`. Remove everything w
 2. **Switch.** Click **Switch** on another card, or click the account name in VS Code's status bar and pick it.
    Open Claude Code chats pick up the new account on their next message; if one does not, start a new chat.
 3. **Watch usage.** Each card shows Session and Week bars with reset times (green below 70%, amber to 89%, red from 90%).
+4. **Use another model (optional).** Click **Add provider**, enter a name, the gateway address (for example
+   `https://gpt.bdx.market`), its API key and the model names it uses for Opus, Sonnet, Haiku and subagents, press
+   **Test connection**, then **Save**. Click **Switch** on the provider card to use it, or on an account card to go back.
+   A switch reaches Claude Code from its next message, about two seconds later; open chats keep their history.
 
 <img src="docs/assets/status-bar.svg" alt="Clicking the account name in the status bar opens a list to switch accounts" width="100%">
 
@@ -93,9 +104,11 @@ update is safe. No VS Code or Node.js? Use `-SkipExtension`. Remove everything w
 
 ```text
 python claude_accounts.py list | status | usage | switch NAME | save [NAME] | rename NAME NEW | remove NAME | add | doctor
+python claude_accounts.py provider list | add | edit | use NAME | off | test NAME | remove NAME
 ```
 
-Add `--json` for machine-readable output and `--version` for the version.
+Add `--json` for machine-readable output and `--version` for the version. A provider's key is passed with `--key-env
+VARIABLE` or `--key-stdin`, never on the command line.
 
 ## How it works
 
@@ -107,11 +120,20 @@ backs up the current pair, takes Claude Code's own lock files so a token refresh
 those two entries (and clears one cached flag that Claude Code recreates). Details, including the recovery journal and the usage rules, are in
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+A provider is a few lines in Claude Code's `~/.claude/settings.json`: `env.ANTHROPIC_BASE_URL`, the model for each
+alias (`ANTHROPIC_DEFAULT_OPUS_MODEL`, `..._SONNET_...`, `..._HAIKU_...`, `CLAUDE_CODE_SUBAGENT_MODEL`) and an
+`apiKeyHelper` command. Claude Code reloads that file while it runs, which is why a switch needs no restart. The API key
+is **not** written into the file: it stays encrypted in the store and the helper hands it to Claude Code on demand.
+Everything else in `settings.json` is left exactly as it was, and switching back restores the previous values.
+
 ## Safety and privacy
 
 - Saved logins are encrypted with Windows DPAPI: only your Windows user on that PC can read them.
-- No server, no telemetry. The only network use is Claude Code's own browser sign-in and a read-only usage request
-  made with your own token.
+- No server, no telemetry. The only network use is Claude Code's own browser sign-in, a read-only usage request made
+  with your own token, and, only when you press **Test connection**, a few small requests to the provider address you entered.
+- Provider API keys are encrypted the same way as saved logins, are never written to `settings.json`, and are refused on
+  the command line (they come from an environment variable or standard input). Before every change a backup of
+  `settings.json` is taken (encrypted), the result is verified and a failed write is rolled back.
 - DPAPI does not protect against malware running as your Windows user. See [SECURITY.md](SECURITY.md).
 - Do not commit the `~/.claude-accounts` folder or share it; it holds your saved logins. The repository's
   `.gitignore` already excludes every file the tool writes.
@@ -119,8 +141,12 @@ those two entries (and clears one cached flag that Claude Code recreates). Detai
 ## Limits, stated plainly
 
 - Windows only (the encryption uses DPAPI). macOS and Linux are not supported.
-- Built for claude.ai subscription logins (Pro, Max, Team). It does not manage API keys. Tested with real Max and Pro
-  accounts; Team accounts use the same login format.
+- Accounts are claude.ai subscription logins (Pro, Max, Team), tested with real Max and Pro accounts; Team accounts use
+  the same login format. Providers use an API key of your own gateway.
+- A provider's address must speak Anthropic's Messages format (`/v1/messages`). Anthropic does not support routing Claude
+  Code to non-Claude models, so tool use and thinking depend on the model and the gateway; use **Test connection**.
+- While a provider is in use your Claude plan limits and usage bars do not apply, and Claude Code's own cost figures are
+  only meaningful for Claude models. Switching model in the middle of a chat makes the new model re-read the whole chat once.
 - A saved login stays valid for about 28 days from its last refresh. An account you never use expires; the window warns
   you 7 days ahead.
 - Usage for an account you are not using is live only while its saved sign-in is fresh (about 8 hours after you last
@@ -152,7 +178,7 @@ record which account was used.
 ## Develop
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\test.ps1          # 32 engine tests + 16 extension tests, fake accounts, no windows opened
+powershell -ExecutionPolicy Bypass -File scripts\test.ps1          # 52 engine tests + 16 window tests + 45 extension checks, fake accounts, nothing shown on screen
 powershell -ExecutionPolicy Bypass -File scripts\build-vsix.ps1    # builds dist/claude-accounts-<version>.vsix
 python -I scripts/check-svg.py docs/assets
 python -I scripts/check-site.py

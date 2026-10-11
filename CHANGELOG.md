@@ -2,8 +2,19 @@
 
 All notable changes to CCSwitcherX. Dates are in ISO format.
 
-## Unreleased
+## 1.2.0 (2026-10-12)
 
+- **Providers: use other models, one click.** Save a gateway (address, API key, which model answers for Opus, Sonnet, Haiku
+  and subagents) and switch Claude Code to it from the window, the VS Code status bar or `provider use NAME`; switch back by
+  picking an account. A switch reaches Claude Code from its next message (about two seconds), with no restart.
+- The API key is never written to Claude Code's `settings.json`: it stays DPAPI-encrypted in the store and an `apiKeyHelper`
+  command hands it to Claude Code on demand. Only six keys of `settings.json` are ever touched, their previous values are
+  restored on the way back, the base URL and the key helper are written together, every change has an encrypted backup, is
+  verified and rolled back on failure, and a `settings.json` that is not valid JSON is never written.
+- **Test connection** checks every model with a tool call followed by a second step (where gateways that mishandle thinking
+  blocks fail), and reports a readable result per model.
+- `doctor` also checks the settings file, stray credentials that would override a provider's key, and the key helper.
+- New command group `provider list | add | edit | use | off | test | remove`; keys are accepted only through `--key-env` or `--key-stdin`.
 - **Reset times read the right minute.** Anthropic reports resets a fraction of a second before the hour, so a reset at
   1:00 AM showed as "12:59 AM". Times are now rounded to the nearest minute.
 
