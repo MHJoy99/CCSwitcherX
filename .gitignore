@@ -1,0 +1,18 @@
+# working files and build output
+.work/
+dist/
+__pycache__/
+*.pyc
+node_modules/
+*.vsix
+
+# guards: nothing from a real Claude login or from the app's data folder may ever be committed
+profiles/
+backups/
+usage.json
+login.log
+switch.journal
+doctor-cache.json
+*.dat
+.credentials.json
+.claude.json

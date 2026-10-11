@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" role="img">
+  <title>CCSwitcherX wordmark</title>
+  <desc>The CCSwitcherX mark with the word CCSwitcher and an accent X. Text is dark on light pages and light on dark pages.</desc>
+  <style>
+    .wm { fill: #1f1e1d; }
+    .x { fill: #c96442; }
+    .t { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-weight: 700; font-size: 64px; }
+    @media (prefers-color-scheme: dark) {
+      .wm { fill: #f0eee6; }
+      .x { fill: #d97757; }
+    }
+  </style>
+  <g transform="translate(16 16) scale(0.5)">
+    <rect x="10.24" y="10.24" width="235.52" height="235.52" rx="61.44" fill="#d97757"/>
+    <rect x="56.32" y="85.76" width="102.4" height="20.48" rx="10.24" fill="#ffffff"/>
+    <polygon points="143.36,56.32 204.8,96 143.36,135.68" fill="#ffffff"/>
+    <rect x="97.28" y="149.76" width="102.4" height="20.48" rx="10.24" fill="#ffffff"/>
+    <polygon points="112.64,120.32 51.2,160 112.64,199.68" fill="#ffffff"/>
+  </g>
+  <text x="168" y="103" class="t"><tspan class="wm">CCSwitcher</tspan><tspan class="x">X</tspan></text>
+</svg>

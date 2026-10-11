@@ -1,0 +1,56 @@
+name: Feature request
+description: Suggest a change or a new capability for CCSwitcherX.
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. CCSwitcherX is deliberately small: it switches the Claude Code login between your own accounts, on Windows, with no server and no telemetry. Requests that fit that job are the easiest to take on.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part would this change?
+      options:
+        - Claude Accounts window
+        - VS Code status bar and picker
+        - Command line (claude_accounts.py)
+        - Usage display
+        - Documentation or website
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe what you are trying to do today, and where it gets in the way.
+      placeholder: "When I have three accounts, I cannot tell at a glance which one is nearly out of usage."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+      description: Describe the behaviour you have in mind. A short example of how it would look or be used helps.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Other ways to get the same result, including doing it by hand.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched the existing issues and did not find this request.
+          required: true
+        - label: This request does not need a server, telemetry, or a new third-party dependency. If it does, I have said so above.
+          required: true

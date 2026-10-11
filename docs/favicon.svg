@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img">
+  <title>CCSwitcherX</title>
+  <desc>Terracotta rounded square with two thick white arrows, simplified for 16 px.</desc>
+  <rect x="10.24" y="10.24" width="235.52" height="235.52" rx="61.44" fill="#d97757"/>
+  <rect x="51.2" y="78.72" width="98.8" height="34.56" rx="12" fill="#ffffff"/>
+  <polygon points="138.24,56 209.92,96 138.24,136" fill="#ffffff"/>
+  <rect x="110.08" y="142.72" width="94.72" height="34.56" rx="12" fill="#ffffff"/>
+  <polygon points="117.76,120 46.08,160 117.76,200" fill="#ffffff"/>
+</svg>

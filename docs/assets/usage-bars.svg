@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img">
+  <title>Usage for every account</title>
+  <desc>Two fictional saved accounts. Personal (Max 5x, in use): Session 64% and Week 34%. Team (Acme Inc): Session 91% and Week 72%, shown as of 3 hours ago. Bars fill from zero, hold, then reset. Green below 70%, amber 70 to 89%, red 90% and up.</desc>
+  <style>
+    text { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    .mono { font-family: 'Cascadia Mono', Consolas, 'Courier New', monospace; }
+    .name { font-size: 18px; font-weight: 700; fill: #f0eee6; }
+    .sub { font-size: 18px; font-weight: 400; fill: #a3a099; }
+    .lbl { font-size: 14px; fill: #a3a099; }
+    .pct { font-size: 15px; font-weight: 700; fill: #f0eee6; }
+    .rst { font-size: 13px; fill: #a3a099; }
+    .leg { font-size: 13px; fill: #a3a099; }
+        .g { fill: #5bbf8a; }
+    .a { fill: #e0a84b; }
+    .r { fill: #e5726b; }
+    @keyframes fill-64 {
+      0% { transform: scaleX(0); animation-timing-function: cubic-bezier(.22,.61,.36,1); }
+      40% { transform: scaleX(1); animation-timing-function: ease-in-out; }
+      84% { transform: scaleX(1); }
+      90%, 100% { transform: scaleX(0); }
+    }
+    @keyframes fill-34 {
+      0% { transform: scaleX(0); animation-timing-function: cubic-bezier(.22,.61,.36,1); }
+      40% { transform: scaleX(1); animation-timing-function: ease-in-out; }
+      84% { transform: scaleX(1); }
+      90%, 100% { transform: scaleX(0); }
+    }
+    @keyframes fill-91 {
+      0% { transform: scaleX(0); animation-timing-function: cubic-bezier(.22,.61,.36,1); }
+      40% { transform: scaleX(1); animation-timing-function: ease-in-out; }
+      84% { transform: scaleX(1); }
+      90%, 100% { transform: scaleX(0); }
+    }
+    @keyframes fill-72 {
+      0% { transform: scaleX(0); animation-timing-function: cubic-bezier(.22,.61,.36,1); }
+      40% { transform: scaleX(1); animation-timing-function: ease-in-out; }
+      84% { transform: scaleX(1); }
+      90%, 100% { transform: scaleX(0); }
+    }
+    .f { transform-box: fill-box; transform-origin: 0 50%; }
+    @media (prefers-reduced-motion: reduce) { *{ animation: none !important; } }
+  </style>
+
+  <rect x="0" y="0" width="960" height="360" rx="16" fill="#1f1e1d"/>
+  <text x="40" y="46" font-size="22" font-weight="700" fill="#f0eee6">Usage for every account</text>
+
+  <!-- Personal card -->
+  <rect x="40" y="66" width="880" height="120" rx="14" fill="#2a2927" stroke="#3b3936"/>
+  <circle cx="72" cy="96" r="16" fill="#d97757"/>
+  <text x="72" y="102" font-size="15" font-weight="700" fill="#1f1e1d" text-anchor="middle">P</text>
+  <text x="100" y="102" class="name">Personal<tspan class="sub"> · Max 5x</tspan></text>
+  <rect x="276" y="84" width="74" height="24" rx="12" fill="#23382d"/>
+  <text x="313" y="100" font-size="11" font-weight="700" fill="#5bbf8a" text-anchor="middle" letter-spacing=".6">IN USE</text>
+
+  <text x="100" y="137" class="lbl">Session</text>
+  <rect x="180" y="126" width="440" height="12" rx="6" fill="#3b3936"/>
+  <rect class="f g" style="animation:fill-64 9s infinite" x="180" y="126" width="281.6" height="12" rx="6"/>
+  <text x="636" y="137" class="pct">64%</text>
+  <text x="690" y="137" class="rst">resets in 3h 5m</text>
+
+  <text x="100" y="173" class="lbl">Week</text>
+  <rect x="180" y="162" width="440" height="12" rx="6" fill="#3b3936"/>
+  <rect class="f g" style="animation:fill-34 9s infinite" x="180" y="162" width="149.6" height="12" rx="6"/>
+  <text x="636" y="173" class="pct">34%</text>
+  <text x="690" y="173" class="rst">resets Thu 5:00 PM</text>
+
+  <!-- Team card -->
+  <rect x="40" y="200" width="880" height="120" rx="14" fill="#2a2927" stroke="#3b3936"/>
+  <circle cx="72" cy="230" r="16" fill="#6c8be0"/>
+  <text x="72" y="236" font-size="15" font-weight="700" fill="#1f1e1d" text-anchor="middle">T</text>
+  <text x="100" y="236" class="name">Team<tspan class="sub"> · Acme Inc</tspan></text>
+  <text x="896" y="236" font-size="13" font-style="italic" fill="#a3a099" text-anchor="end">as of 3 h ago</text>
+
+  <text x="100" y="271" class="lbl">Session</text>
+  <rect x="180" y="260" width="440" height="12" rx="6" fill="#3b3936"/>
+  <rect class="f r" style="animation:fill-91 9s infinite" x="180" y="260" width="400.4" height="12" rx="6"/>
+  <text x="636" y="271" class="pct">91%</text>
+  <text x="690" y="271" class="rst">resets in 1h 11m</text>
+
+  <text x="100" y="307" class="lbl">Week</text>
+  <rect x="180" y="296" width="440" height="12" rx="6" fill="#3b3936"/>
+  <rect class="f a" style="animation:fill-72 9s infinite" x="180" y="296" width="316.8" height="12" rx="6"/>
+  <text x="636" y="307" class="pct">72%</text>
+  <text x="690" y="307" class="rst">resets Tue 4:44 AM</text>
+
+  <!-- Legend -->
+  <rect x="40" y="335" width="12" height="12" rx="3" fill="#5bbf8a"/>
+  <text x="58" y="346" class="leg">green below 70%</text>
+  <rect x="198" y="335" width="12" height="12" rx="3" fill="#e0a84b"/>
+  <text x="216" y="346" class="leg">amber 70-89%</text>
+  <rect x="330" y="335" width="12" height="12" rx="3" fill="#e5726b"/>
+  <text x="348" y="346" class="leg">red 90%+</text>
+</svg>

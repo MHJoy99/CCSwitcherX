@@ -1,0 +1,21 @@
+# CCSwitcherX
+
+> CCSwitcherX is a free, open-source (MIT) unofficial Windows tool that switches the Claude Code login between your own saved accounts, such as a personal Max plan and a work Team plan, in one click. It has a small window, a VS Code status-bar extension and a command-line tool. It needs only Python 3.9 or newer, with no pip packages. It is not affiliated with Anthropic.
+
+## Docs
+
+- [README](https://github.com/MHJoy99/CCSwitcherX#readme): what it does, install steps and usage.
+- [FAQ](https://github.com/MHJoy99/CCSwitcherX/blob/main/docs/FAQ.md): questions and answers on switching, storage, usage, platforms and safety.
+- [Architecture](https://github.com/MHJoy99/CCSwitcherX/blob/main/docs/ARCHITECTURE.md): how a switch works, the lock files, the backup and journal design.
+- [Full description for LLMs](https://mhjoy99.github.io/CCSwitcherX/llms-full.txt): complete plain-text description, CLI output, limits and FAQ.
+
+## Try it
+
+- [Demo](https://mhjoy99.github.io/CCSwitcherX/demo/): interactive demo with fictional account data.
+- [Website](https://mhjoy99.github.io/CCSwitcherX/): overview, install steps and FAQ.
+
+## Optional
+
+- [Repository](https://github.com/MHJoy99/CCSwitcherX): source code, MIT license.
+- [Releases](https://github.com/MHJoy99/CCSwitcherX/releases): tagged versions and changelog entries.
+- [Issues](https://github.com/MHJoy99/CCSwitcherX/issues): bug reports and feature requests.

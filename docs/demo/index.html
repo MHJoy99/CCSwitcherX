@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CCSwitcherX Live Demo: Switch Claude Code Accounts</title>
+<meta name="description" content="Try CCSwitcherX in your browser: switch, add, rename or remove fictional Claude Code accounts. Nothing here touches a real login.">
+<meta name="theme-color" content="#f5f4ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1f1e1d" media="(prefers-color-scheme: dark)">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"CCSwitcherX live demo","url":"https://mhjoy99.github.io/CCSwitcherX/demo/","description":"Interactive demo of CCSwitcherX with fictional accounts: switch, add, rename and remove accounts and see usage bars. Nothing in it touches a real login.","applicationCategory":"DeveloperApplication","operatingSystem":"Any (runs in the browser)","isAccessibleForFree":true,"isPartOf":{"@type":"SoftwareApplication","name":"CCSwitcherX","url":"https://mhjoy99.github.io/CCSwitcherX/"},"author":{"@type":"Person","name":"MHJoy99","url":"https://github.com/MHJoy99"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"CCSwitcherX","item":"https://mhjoy99.github.io/CCSwitcherX/"},{"@type":"ListItem","position":2,"name":"Live demo","item":"https://mhjoy99.github.io/CCSwitcherX/demo/"}]}</script>
+<link rel="canonical" href="https://mhjoy99.github.io/CCSwitcherX/demo/">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CCSwitcherX">
+<meta property="og:title" content="CCSwitcherX live demo: switch Claude Code accounts (fictional data)">
+<meta property="og:description" content="Try CCSwitcherX in your browser: switch, add, rename or remove fictional Claude Code accounts. Nothing here touches a real login.">
+<meta property="og:url" content="https://mhjoy99.github.io/CCSwitcherX/demo/">
+<meta property="og:image" content="https://mhjoy99.github.io/CCSwitcherX/og-image.png">
+<meta property="og:image:alt" content="CCSwitcherX Claude Accounts window with fictional accounts">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CCSwitcherX live demo: switch Claude Code accounts (fictional data)">
+<meta name="twitter:description" content="Try CCSwitcherX in your browser: switch, add, rename or remove fictional Claude Code accounts. Nothing here touches a real login.">
+<meta name="twitter:image" content="https://mhjoy99.github.io/CCSwitcherX/og-image.png">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<style>
+:root{--bg:#f5f4ee;--card:#ffffff;--border:#e0ddd2;--text:#1f1e1d;--muted:#6b6a65;--accent:#c96442;--accent-hover:#b5573a;--accent-text:#ffffff;--btn:#efece2;--btn-hover:#e5e1d4;--good:#2f8f5b;--good-bg:#e3f3ea;--warn:#a8741a;--bad:#c0392b;--blue:#4f6fc4;--strip:#ebe8dd;color-scheme:light}
+:root[data-theme="dark"]{--bg:#1f1e1d;--card:#2a2927;--border:#3b3936;--text:#f0eee6;--muted:#a3a099;--accent:#d97757;--accent-hover:#e48a6c;--accent-text:#1f1e1d;--btn:#3a3835;--btn-hover:#46443f;--good:#5bbf8a;--good-bg:#23382d;--warn:#e0a84b;--bad:#e5726b;--blue:#6c8be0;--strip:#171615;color-scheme:dark}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1f1e1d;--card:#2a2927;--border:#3b3936;--text:#f0eee6;--muted:#a3a099;--accent:#d97757;--accent-hover:#e48a6c;--accent-text:#1f1e1d;--btn:#3a3835;--btn-hover:#46443f;--good:#5bbf8a;--good-bg:#23382d;--warn:#e0a84b;--bad:#e5726b;--blue:#6c8be0;--strip:#171615;color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{min-height:100vh;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.45}
+button{font-family:inherit}
+a{color:var(--accent)}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.notice{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--border);font-size:14px}
+.notice p{margin:0;color:var(--muted)}
+.notice-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+main{max-width:760px;margin:0 auto;padding:24px 16px 40px}
+.window{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:24px}
+.head{display:flex;gap:12px;align-items:center}
+.head svg{flex:none}
+h1{font-size:20px;margin:0;font-weight:700}
+.subtitle{margin:2px 0 0;color:var(--muted);font-size:14px}
+.list{margin-top:18px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.card.active{border-color:var(--accent)}
+.card-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:17px;flex:none}
+.who{flex:1 1 180px;min-width:0}
+.name{margin:0;font-size:16px;font-weight:700;overflow-wrap:anywhere}
+.meta{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.actions{display:flex;gap:8px;align-items:center;margin-left:auto}
+.pill{background:var(--good-bg);color:var(--good);font-size:11px;font-weight:700;letter-spacing:.04em;padding:5px 10px;border-radius:999px;display:inline-block}
+.bars{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px}
+.bar{flex:1 1 150px;min-width:0}
+.bar-label{font-size:13px;font-weight:700}
+.track{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:6px 0 4px}
+.fill{height:100%;width:0;border-radius:3px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.caption{font-size:12px;color:var(--muted)}
+.note{margin:12px 0 0;font-size:13px;color:var(--muted);font-style:italic}
+.warn-text{margin:12px 0 0;font-size:13px;font-weight:700;color:var(--warn)}
+.btn{font-size:14px;padding:8px 14px;border-radius:8px;border:1px solid transparent;background:var(--btn);color:var(--text);cursor:pointer;line-height:1.2}
+.btn:hover{background:var(--btn-hover)}
+.btn.primary{background:var(--accent);color:var(--accent-text);font-weight:700}
+.btn.primary:hover{background:var(--accent-hover)}
+.btn.danger{background:var(--bad);color:#fff;font-weight:700}
+.btn[aria-disabled="true"]{opacity:.6;cursor:default}
+.btn.more{padding:8px 11px;font-weight:700;letter-spacing:.05em}
+.footer{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.status{min-height:1.5em;font-size:14px;color:var(--muted);margin:14px 0 0}
+.status.ok{color:var(--good)}
+.status.warn{color:var(--warn)}
+.status.bad{color:var(--bad)}
+.menu-wrap{position:relative}
+.menu{position:absolute;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:5}
+.menu button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--text);font-size:14px;padding:9px 10px;border-radius:6px;cursor:pointer}
+.menu button:hover,.menu button:focus-visible{background:var(--btn)}
+.empty{color:var(--muted);font-size:14px;margin:0 0 12px}
+.bar-wrap{position:relative;margin-top:22px}
+.editor-bar{display:flex;align-items:center;height:30px;background:var(--strip);border:1px solid var(--border);border-radius:8px;padding:0 4px}
+#bar-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:var(--text);font-size:12px;padding:4px 8px;border-radius:5px;cursor:pointer}
+#bar-btn:hover{background:var(--btn)}
+.picker{position:absolute;left:0;bottom:calc(100% + 6px);width:min(340px,100%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:6}
+.picker-row{display:flex;justify-content:space-between;gap:10px;align-items:center;width:100%;text-align:left;background:none;border:0;color:var(--text);font-size:13px;padding:8px 10px;border-radius:6px;cursor:pointer}
+.picker-row:hover,.picker-row:focus-visible{background:var(--btn)}
+.picker-row small{display:block;color:var(--muted);font-size:12px}
+.picker-row .tag{font-size:12px;color:var(--accent);font-weight:700;white-space:nowrap}
+.picker-row .tag.in{color:var(--good)}
+dialog{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(440px,calc(100vw - 32px));box-shadow:0 16px 48px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog h2{font-size:17px;margin:0 0 10px;font-weight:700}
+dialog p{margin:0;color:var(--muted);font-size:14px;white-space:pre-line;line-height:1.5}
+.wait{margin-top:14px!important;color:var(--accent)!important;font-weight:700}
+.field-wrap{margin-top:14px}
+.field-wrap label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.field{width:100%;font:inherit;font-size:15px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text)}
+.dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.fallback{max-width:760px;margin:24px auto;padding:0 16px;color:var(--muted)}
+@media (max-width:480px){.window{padding:16px}.actions{margin-left:0;width:100%;justify-content:flex-end}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="notice">
+  <p>Interactive demo with fictional data. Nothing here touches a real login.
+    <a href="../">Back to the site</a> · <a href="https://github.com/MHJoy99/CCSwitcherX">GitHub</a></p>
+  <div class="notice-actions">
+    <button class="btn" type="button" id="reset">Reset demo</button>
+    <button class="btn" type="button" id="theme">Switch theme</button>
+  </div>
+</div>
+
+<main>
+  <noscript><p class="fallback">This live demo needs JavaScript. Without it the buttons do nothing. The project page and its screenshots are at <a href="../">the CCSwitcherX site</a>.</p></noscript>
+
+  <section class="window" aria-labelledby="wtitle">
+    <header class="head">
+      <svg viewBox="0 0 1 1" width="30" height="30" aria-hidden="true"><rect x=".04" y=".04" width=".92" height=".92" rx=".24" fill="#c96442"/><rect x=".22" y=".335" width=".40" height=".08" rx=".04" fill="#fff"/><path d="M.56 .22L.80 .375L.56 .53Z" fill="#fff"/><rect x=".38" y=".585" width=".40" height=".08" rx=".04" fill="#fff"/><path d="M.44 .47L.20 .625L.44 .78Z" fill="#fff"/></svg>
+      <div>
+        <h1 id="wtitle">Claude Accounts</h1>
+        <p class="subtitle">Choose which account Claude Code signs in with.</p>
+      </div>
+    </header>
+
+    <div class="list" id="list"></div>
+
+    <div class="footer">
+      <button class="btn primary" type="button" id="add">+ Add account</button>
+      <button class="btn" type="button" id="refresh">↻ Refresh usage</button>
+    </div>
+    <p class="status" id="status" aria-live="polite"></p>
+  </section>
+
+  <div class="bar-wrap" id="pick-wrap">
+    <div class="editor-bar">
+      <button type="button" id="bar-btn" aria-label="Editor status bar: choose the account Claude Code uses" aria-haspopup="true" aria-expanded="false" aria-controls="picker">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="5.5" r="2.8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 13.5c.6-2.4 2.6-3.8 5-3.8s4.4 1.4 5 3.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span id="bar-text"></span>
+      </button>
+    </div>
+    <div class="picker" id="picker" role="group" aria-label="Switch account" hidden></div>
+  </div>
+</main>
+
+<dialog id="dlg-add" aria-labelledby="add-title">
+  <form method="dialog">
+    <h2 id="add-title">Sign in with the account you want to add</h2>
+    <p id="add-steps">A browser tab opened on the Claude sign-in page.
+1. Pick the account to add. If the page shows the wrong one, choose “Switch account”.
+2. For a Team account, choose the team workspace if asked.
+3. Press Authorize, then come back here. This window closes by itself.</p>
+    <p class="wait" id="add-wait" role="status">Waiting<span id="dots"></span></p>
+    <div class="field-wrap" id="add-field" hidden>
+      <label for="add-name">Name for this account</label>
+      <input class="field" id="add-name" maxlength="40" autocomplete="off">
+    </div>
+    <div class="dlg-actions">
+      <button class="btn" type="submit" value="cancel">Cancel</button>
+      <button class="btn primary" type="submit" value="save" id="add-save" hidden>Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-rename" aria-labelledby="rn-title">
+  <form method="dialog">
+    <h2 id="rn-title">Rename account</h2>
+    <div class="field-wrap">
+      <label for="rn-input">New name:</label>
+      <input class="field" id="rn-input" maxlength="40" autocomplete="off">
+    </div>
+    <div class="dlg-actions">
+      <button class="btn" type="submit" value="cancel">Cancel</button>
+      <button class="btn primary" type="submit" value="save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-remove" role="alertdialog" aria-labelledby="rm-title" aria-describedby="rm-body">
+  <form method="dialog">
+    <h2 id="rm-title">Remove account</h2>
+    <p id="rm-body"></p>
+    <div class="dlg-actions">
+      <button class="btn" type="submit" value="cancel">Cancel</button>
+      <button class="btn danger" type="submit" value="remove">Remove</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var TONES = { accent: 'var(--accent)', blue: 'var(--blue)', gray: '#7d7a72' };
+  var accounts, activeId, seq = 10, swapTok = 0, statusTimer = 0, refreshTimer = 0, busy = false;
+  var addTimers = [], dotsTimer = 0, opener = null, renameId = null, removeId = null;
+
+  function initial() {
+    return [
+      { id: 'p', name: 'Personal', email: 'alex@example.com', plan: 'Max 5x', tone: 'accent', s: 64, sr: 'resets in 3h 6m', w: 34, wr: 'resets Thu 5:00 PM', warn: null },
+      { id: 't', name: 'Team', email: 'alex@acme.example', plan: 'Team · Acme Inc', tone: 'blue', s: 11, sr: 'resets in 4h 46m', w: 27, wr: 'resets Sat 4:00 PM', warn: null },
+      { id: 'c', name: 'Client B', email: 'client.b@example.com', plan: 'Pro', tone: 'gray', s: null, w: null, warn: 'Saved sign-in expires in 2 days. Use it before then.' }
+    ];
+  }
+  function reset() { accounts = initial(); activeId = 'p'; }
+  function find(id) { for (var i = 0; i < accounts.length; i++) if (accounts[i].id === id) return accounts[i]; return null; }
+  function active() { return activeId ? find(activeId) : null; }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function usageColor(p) { return p < 70 ? 'var(--good)' : p < 90 ? 'var(--warn)' : 'var(--bad)'; }
+  function say(text, tone) {
+    var s = $('#status');
+    s.textContent = text;
+    s.className = 'status' + (tone ? ' ' + tone : '');
+  }
+
+  function buildBar(label, pct, caption, animate, fills) {
+    var wrap = el('div', 'bar');
+    wrap.appendChild(el('div', 'bar-label', label + ' ' + pct + '%'));
+    var track = el('div', 'track');
+    var fill = el('div', 'fill');
+    fill.style.background = usageColor(pct);
+    fill.style.width = (animate ? 0 : pct) + '%';
+    fill.setAttribute('data-pct', pct);
+    track.appendChild(fill);
+    wrap.appendChild(track);
+    wrap.appendChild(el('div', 'caption', caption));
+    fills.push(fill);
+    return wrap;
+  }
+
+  function closeMenus() {
+    var ms = document.querySelectorAll('.menu');
+    for (var i = 0; i < ms.length; i++) ms[i].hidden = true;
+    var bs = document.querySelectorAll('.more[aria-expanded="true"]');
+    for (var j = 0; j < bs.length; j++) bs[j].setAttribute('aria-expanded', 'false');
+  }
+
+  function menuFor(a) {
+    var wrap = el('div', 'menu-wrap');
+    var btn = el('button', 'btn more', '⋯');
+    btn.type = 'button';
+    btn.className = 'btn more';
+    btn.setAttribute('aria-haspopup', 'menu');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-label', 'More options for ' + a.name);
+    var menu = el('div', 'menu');
+    menu.setAttribute('role', 'menu');
+    menu.hidden = true;
+    var rn = el('button', null, 'Rename…');
+    rn.type = 'button';
+    rn.setAttribute('role', 'menuitem');
+    var rm = el('button', null, 'Remove from list…');
+    rm.type = 'button';
+    rm.setAttribute('role', 'menuitem');
+    rn.onclick = function () { closeMenus(); openRename(a.id); };
+    rm.onclick = function () { closeMenus(); openRemove(a.id); };
+    btn.onclick = function () {
+      var was = !menu.hidden;
+      closeMenus();
+      if (!was) {
+        menu.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+        rn.focus();
+      }
+    };
+    menu.addEventListener('keydown', function (e) {
+      var items = [rn, rm];
+      var i = items.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        items[(i + 1) % 2].focus();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeMenus();
+        btn.focus();
+      } else if (e.key === 'Tab') {
+        closeMenus();
+      }
+    });
+    menu.appendChild(rn);
+    menu.appendChild(rm);
+    wrap.appendChild(btn);
+    wrap.appendChild(menu);
+    return wrap;
+  }
+
+  function render(o) {
+    o = o || {};
+    var list = $('#list');
+    var oldPill = list.querySelector('.pill');
+    var from = o.flip && oldPill ? oldPill.getBoundingClientRect() : null;
+    var fills = [];
+    list.textContent = '';
+    if (!accounts.length) list.appendChild(el('p', 'empty', 'No accounts saved yet. Use Add account to sign in.'));
+    accounts.forEach(function (a) {
+      var card = el('article', a.id === activeId ? 'card active' : 'card');
+      card.tabIndex = -1;
+      card.setAttribute('data-id', a.id);
+      card.setAttribute('aria-labelledby', 'n-' + a.id);
+      var top = el('div', 'card-top');
+      var av = el('div', 'avatar', (a.name.charAt(0) || '?').toUpperCase());
+      av.setAttribute('aria-hidden', 'true');
+      av.style.background = TONES[a.tone];
+      var who = el('div', 'who');
+      var nm = el('h2', 'name', a.name);
+      nm.id = 'n-' + a.id;
+      who.appendChild(nm);
+      who.appendChild(el('div', 'meta', a.email + ' · ' + a.plan));
+      top.appendChild(av);
+      top.appendChild(who);
+      var actions = el('div', 'actions');
+      if (a.id === activeId) {
+        actions.appendChild(el('span', 'pill', 'IN USE'));
+      } else {
+        var sw = el('button', 'btn', 'Switch');
+        sw.type = 'button';
+        sw.setAttribute('aria-label', 'Switch to ' + a.name);
+        sw.onclick = function () { switchTo(a.id); };
+        actions.appendChild(sw);
+      }
+      actions.appendChild(menuFor(a));
+      top.appendChild(actions);
+      card.appendChild(top);
+      if (a.s == null) {
+        card.appendChild(el('p', 'note', 'No usage numbers yet. They appear once this account has been used.'));
+      } else {
+        var bars = el('div', 'bars');
+        bars.appendChild(buildBar('Session', a.s, a.sr, o.animate, fills));
+        bars.appendChild(buildBar('Week', a.w, a.wr, o.animate, fills));
+        card.appendChild(bars);
+      }
+      if (a.warn) card.appendChild(el('p', 'warn-text', a.warn));
+      list.appendChild(card);
+    });
+    if (o.animate && !reduce) {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          fills.forEach(function (f) { f.style.width = f.getAttribute('data-pct') + '%'; });
+        });
+      });
+    } else {
+      fills.forEach(function (f) { f.style.width = f.getAttribute('data-pct') + '%'; });
+    }
+    if (from && !reduce) {
+      var np = list.querySelector('.pill');
+      if (np) {
+        var to = np.getBoundingClientRect();
+        np.animate(
+          [{ transform: 'translate(' + (from.left - to.left) + 'px,' + (from.top - to.top) + 'px)' }, { transform: 'none' }],
+          { duration: 380, easing: 'cubic-bezier(.2,.8,.2,1)' }
+        );
+      }
+    }
+    if (o.focusId) {
+      var c = list.querySelector('[data-id="' + o.focusId + '"]');
+      if (c) c.focus({ preventScroll: true });
+    }
+  }
+
+  function updateBar() {
+    var a = active();
+    $('#bar-text').textContent = a
+      ? a.name + ' · ' + (a.s == null ? 'no usage yet' : a.s + '%')
+      : 'Signed in, not in the list';
+  }
+
+  function closePicker(restore) {
+    $('#picker').hidden = true;
+    $('#bar-btn').setAttribute('aria-expanded', 'false');
+    if (restore) $('#bar-btn').focus();
+  }
+  function openPicker() {
+    closeMenus();
+    var p = $('#picker');
+    p.textContent = '';
+    accounts.forEach(function (a) {
+      var row = el('button', 'picker-row');
+      row.type = 'button';
+      var left = el('span', null, a.name);
+      left.appendChild(el('small', null, a.email));
+      var isIn = a.id === activeId;
+      var tag = el('span', 'tag' + (isIn ? ' in' : ''), isIn ? 'In use' : 'Switch');
+      row.appendChild(left);
+      row.appendChild(tag);
+      row.onclick = function () {
+        closePicker(false);
+        if (!isIn) switchTo(a.id);
+        else $('#bar-btn').focus();
+      };
+      p.appendChild(row);
+    });
+    p.hidden = false;
+    $('#bar-btn').setAttribute('aria-expanded', 'true');
+    if (p.firstChild) p.firstChild.focus();
+  }
+
+  function switchTo(id) {
+    var a = find(id);
+    if (!a || id === activeId) return;
+    var tok = ++swapTok;
+    var ms = 21 + Math.floor(Math.random() * 7);
+    activeId = id;
+    render({ flip: true, focusId: id });
+    updateBar();
+    say('Switching to "' + a.name + '"…', 'muted');
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(function () {
+      if (tok !== swapTok) return;
+      say('Now using "' + a.name + '" (demo swap: ' + ms + ' ms). Open chats switch on their next message; if one does not, start a new chat.', 'ok');
+    }, 300);
+  }
+
+  /* ---- dialogs ---- */
+  var dlgAdd = $('#dlg-add'), dlgRename = $('#dlg-rename'), dlgRemove = $('#dlg-remove');
+
+  function openDialog(d) {
+    opener = document.activeElement;
+    d.returnValue = '';
+    d.showModal();
+  }
+  function restoreFocus(cardId) {
+    setTimeout(function () {
+      if (cardId) {
+        var c = document.querySelector('[data-id="' + cardId + '"]');
+        if (c) { c.focus({ preventScroll: true }); return; }
+      }
+      if (opener && opener.isConnected) opener.focus();
+      else $('#add').focus();
+    }, 0);
+  }
+
+  function clearAddTimers() {
+    addTimers.forEach(clearTimeout);
+    addTimers = [];
+    clearInterval(dotsTimer);
+    dotsTimer = 0;
+  }
+  function setAddStage(stage) {
+    var named = stage === 'name';
+    $('#add-steps').hidden = named;
+    $('#add-wait').hidden = named;
+    $('#add-field').hidden = !named;
+    $('#add-save').hidden = !named;
+    $('#add-title').textContent = named ? 'Name this account' : 'Sign in with the account you want to add';
+    if (named) {
+      $('#add-name').value = 'Side project';
+      $('#add-name').focus();
+    }
+  }
+  function openAdd() {
+    closeMenus();
+    setAddStage('wait');
+    openDialog(dlgAdd);
+    var n = 0;
+    dotsTimer = setInterval(function () {
+      n = (n + 1) % 4;
+      $('#dots').textContent = '.'.repeat(n);
+    }, 450);
+    say('Waiting for you to finish signing in in the browser…', 'muted');
+    addTimers.push(setTimeout(function () { setAddStage('name'); }, 2000));
+  }
+  dlgAdd.addEventListener('close', function () {
+    clearAddTimers();
+    if (dlgAdd.returnValue === 'save') {
+      var name = $('#add-name').value.trim() || 'Account';
+      addAccount(name);
+    } else {
+      say('Cancelled. Your previous login is still in use.', 'muted');
+    }
+    restoreFocus(null);
+  });
+  function addAccount(name) {
+    var id = 'n' + (++seq);
+    accounts.push({ id: id, name: name, email: 'side@example.com', plan: 'Pro', tone: 'accent', s: null, w: null, warn: null });
+    activeId = id;
+    swapTok++;
+    render({ flip: true, focusId: id });
+    updateBar();
+    say('Added "' + name + '" and signed in with it. Open chats switch on their next message; if one does not, start a new chat.', 'ok');
+  }
+
+  function openRename(id) {
+    var a = find(id);
+    if (!a) return;
+    renameId = id;
+    $('#rn-input').value = a.name;
+    openDialog(dlgRename);
+    $('#rn-input').select();
+  }
+  dlgRename.addEventListener('close', function () {
+    var a = find(renameId);
+    if (!a) return;
+    if (dlgRename.returnValue === 'save') {
+      var v = $('#rn-input').value.trim();
+      if (!v) {
+        say('The name cannot be empty. Nothing changed.', 'warn');
+      } else {
+        var old = a.name;
+        a.name = v;
+        render({ focusId: a.id });
+        updateBar();
+        say('Renamed "' + old + '" to "' + v + '".', 'ok');
+        return;
+      }
+    }
+    restoreFocus(a.id);
+  });
+
+  function openRemove(id) {
+    var a = find(id);
+    if (!a) return;
+    removeId = id;
+    $('#rm-title').textContent = 'Remove account';
+    $('#rm-body').textContent = 'Remove "' + a.name + '" from this list?\n\n' +
+      (a.id === activeId
+        ? 'You stay signed in with it right now; only the saved copy is removed.'
+        : 'You can add it back later by signing in again.');
+    openDialog(dlgRemove);
+  }
+  dlgRemove.addEventListener('close', function () {
+    if (dlgRemove.returnValue !== 'remove') { restoreFocus(removeId); return; }
+    var a = find(removeId);
+    if (!a) return;
+    accounts = accounts.filter(function (x) { return x.id !== a.id; });
+    if (activeId === a.id) activeId = null;
+    render();
+    updateBar();
+    say('Removed "' + a.name + '".', 'muted');
+    restoreFocus(null);
+  });
+
+  /* ---- usage refresh ---- */
+  function refreshUsage() {
+    if (busy) return;
+    busy = true;
+    var b = $('#refresh');
+    b.setAttribute('aria-disabled', 'true');
+    say('Refreshing usage…', 'muted');
+    render({ animate: true });
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(function () {
+      busy = false;
+      b.removeAttribute('aria-disabled');
+      say('Usage updated.', 'ok');
+    }, 900);
+  }
+
+  function resetDemo() {
+    closeMenus();
+    closePicker(false);
+    clearTimeout(statusTimer);
+    clearTimeout(refreshTimer);
+    busy = false;
+    $('#refresh').removeAttribute('aria-disabled');
+    reset();
+    render();
+    updateBar();
+    say('Demo reset. Back to the starting accounts.', 'muted');
+  }
+
+  /* ---- theme ---- */
+  var root = document.documentElement;
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  function isDark() {
+    var t = root.getAttribute('data-theme');
+    return t ? t === 'dark' : mq.matches;
+  }
+  function paintTheme() {
+    var target = isDark() ? 'light' : 'dark';
+    var btn = $('#theme');
+    btn.textContent = 'Use ' + target + ' theme';
+    btn.setAttribute('aria-label', 'Use ' + target + ' theme');
+  }
+  $('#theme').onclick = function () {
+    root.setAttribute('data-theme', isDark() ? 'light' : 'dark');
+    paintTheme();
+  };
+  if (mq.addEventListener) mq.addEventListener('change', paintTheme);
+
+  /* ---- wiring ---- */
+  $('#add').onclick = openAdd;
+  $('#refresh').onclick = refreshUsage;
+  $('#reset').onclick = resetDemo;
+  $('#bar-btn').onclick = function () {
+    if ($('#picker').hidden) openPicker(); else closePicker(true);
+  };
+  [$('#add-name'), $('#rn-input')].forEach(function (inp) {
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (inp.closest('dialog') === dlgRename) dlgRename.close('save');
+        else if (!$('#add-field').hidden) dlgAdd.close('save');
+      }
+    });
+  });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.menu-wrap')) closeMenus();
+    if (!e.target.closest('#pick-wrap')) closePicker(false);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (!$('#picker').hidden) { e.preventDefault(); closePicker(true); }
+    else closeMenus();
+  });
+
+  reset();
+  render({ animate: true });
+  updateBar();
+  paintTheme();
+})();
+</script>
+</body>
+</html>

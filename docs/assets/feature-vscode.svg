@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" role="img">
+<title>Account switcher in the VS Code status bar</title>
+<desc>A thin editor status bar shows Personal 64 percent. A click ripple changes it to Team 11 percent. Unofficial VS Code extension for Claude Code accounts.</desc>
+<style>
+.h{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:22px;font-weight:700;fill:#f0eee6}
+.d{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;fill:#a3a099}
+.s{font-family:'Cascadia Mono',Consolas,'Courier New',monospace;font-size:13px;font-weight:600;fill:#1f1e1d}
+.itA{opacity:1;animation:itA 7s ease-in-out infinite}
+.itB{opacity:0;animation:itB 7s ease-in-out infinite}
+.rip{transform-box:fill-box;transform-origin:center;animation:rip 7s ease-out infinite}
+@keyframes itA{0%,40%{opacity:1}50%,94%{opacity:0}100%{opacity:1}}
+@keyframes itB{0%,40%{opacity:0}50%,94%{opacity:1}100%{opacity:0}}
+@keyframes rip{0%,40%{transform:scale(.4);opacity:0}44%{opacity:.8}60%,100%{transform:scale(2);opacity:0}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+<defs>
+  <clipPath id="wc"><rect x="28" y="32" width="424" height="132" rx="14"/></clipPath>
+</defs>
+<rect x="1" y="1" width="478" height="298" rx="18" fill="#2a2927" stroke="#3b3936" stroke-width="2"/>
+<rect x="28" y="32" width="424" height="132" rx="14" fill="#1f1e1d"/>
+<g clip-path="url(#wc)">
+  <rect x="52" y="52" width="180" height="8" rx="4" fill="#3b3936"/>
+  <rect x="72" y="68" width="250" height="8" rx="4" fill="#3b3936"/>
+  <rect x="72" y="84" width="130" height="8" rx="4" fill="#3b3936"/>
+  <rect x="52" y="100" width="210" height="8" rx="4" fill="#3b3936"/>
+  <rect x="28" y="128" width="424" height="36" fill="#2a2927"/>
+  <rect x="28" y="128" width="424" height="1" fill="#3b3936"/>
+  <rect x="44" y="142" width="34" height="8" rx="4" fill="#55524d"/>
+  <rect x="86" y="142" width="20" height="8" rx="4" fill="#55524d"/>
+</g>
+<g class="itA">
+  <rect x="296" y="133" width="140" height="24" rx="6" fill="#d97757"/>
+  <text class="s" x="366" y="149" text-anchor="middle">Personal · 64%</text>
+</g>
+<g class="itB">
+  <rect x="296" y="133" width="140" height="24" rx="6" fill="#6c8be0"/>
+  <text class="s" x="366" y="149" text-anchor="middle">Team · 11%</text>
+</g>
+<circle class="rip" cx="366" cy="145" r="14" fill="none" stroke="#f0eee6" stroke-width="1.5"/>
+<text class="h" x="28" y="206">In your status bar</text>
+<text class="d" x="28" y="232">See the active account and switch</text>
+<text class="d" x="28" y="252">without leaving VS Code.</text>
+</svg>

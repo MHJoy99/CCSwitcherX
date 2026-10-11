@@ -1,0 +1,132 @@
+name: Bug report
+description: Something in CCSwitcherX (the Claude Accounts window, the VS Code extension or the command line) does not work as described.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please fill in the sections below as far as you can.
+
+        **Do not paste tokens, saved login files or real email addresses.** If a security problem is involved, do not use this form; see the security advisory link on the issue chooser.
+
+  - type: input
+    id: ccswitcherx-version
+    attributes:
+      label: CCSwitcherX version
+      description: Run `python claude_accounts.py --version` (it prints `CCSwitcherX <version>`).
+      placeholder: "CCSwitcherX 1.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: windows-version
+    attributes:
+      label: Windows version
+      description: For example Windows 11 Pro 23H2. Run `winver` to see it.
+      placeholder: "Windows 11 Pro"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      description: Run `python --version`.
+      placeholder: "Python 3.11.9"
+    validations:
+      required: true
+
+  - type: input
+    id: claude-code-version
+    attributes:
+      label: Claude Code version
+      description: Run `claude --version` in a terminal. If you only use the VS Code extension, give the extension version from the Extensions view.
+      placeholder: "2.1.296"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: usage
+    attributes:
+      label: How do you use Claude Code?
+      options:
+        - VS Code extension
+        - Terminal (the claude command)
+        - Both VS Code and the terminal
+        - Other (say so in the steps)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of CCSwitcherX is affected?
+      options:
+        - Claude Accounts window
+        - VS Code status bar and picker
+        - Command line (claude_accounts.py)
+        - Install or uninstall scripts
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of the self-check
+      description: |
+        Run `python claude_accounts.py doctor` in the CCSwitcherX folder, or in PowerShell `python "$env:USERPROFILE\.claude-accounts\claude_accounts.py" doctor` if you installed it, and paste the output here.
+
+        **Remove email addresses before you paste it.** Replace them with `<email>`. Do not paste the contents of any `.json` file.
+      render: text
+      placeholder: |
+        ok   Login file found: C:\Users\<you>\.claude\.credentials.json
+        ok   Account record found: C:\Users\<you>\.claude.json
+        ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The exact steps, in order. Say which account names you used (for example "Personal" and "Team"), not their email addresses.
+      placeholder: |
+        1. Open Claude Accounts from the Start Menu
+        2. Click Switch on the "Team" card
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What you thought would happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: What happened instead. If there was an error message, paste its exact text.
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Screenshots (remove email addresses first), the text in the VS Code "Claude Accounts" output channel, or other context.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched the existing issues and did not find this bug.
+          required: true
+        - label: I removed email addresses and did not paste any tokens, passwords or contents of .json or .dat files.
+          required: true

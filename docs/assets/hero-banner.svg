@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 420" role="img">
+<title>CCSwitcherX</title>
+<desc>CCSwitcherX switches Claude Code between your own accounts in one click. An animated mock of the Claude Accounts window hands the in-use account from Personal to Team and back, and the editor status bar follows. Unofficial, not affiliated with Anthropic.</desc>
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#201f1d"/><stop offset="1" stop-color="#141312"/></linearGradient>
+<radialGradient id="glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#d97757" stop-opacity="0.16"/><stop offset="0.55" stop-color="#d97757" stop-opacity="0.04"/><stop offset="1" stop-color="#d97757" stop-opacity="0"/></radialGradient>
+<radialGradient id="gfade" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient>
+<mask id="gm"><rect width="1280" height="420" fill="url(#gfade)"/></mask>
+<pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#f0eee6" stroke-opacity="0.045" stroke-width="1"/></pattern>
+<clipPath id="panel"><rect width="1280" height="420" rx="20"/></clipPath>
+<clipPath id="win"><rect x="612" y="28" width="620" height="320" rx="12"/></clipPath>
+<clipPath id="mk"><rect x="0.04" y="0.04" width="0.92" height="0.92" rx="0.24"/></clipPath>
+<filter id="sh" x="-10%" y="-15%" width="120%" height="140%"><feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#000" flood-opacity="0.55"/></filter>
+<g id="ta"><rect x="0.22" y="0.335" width="0.40" height="0.08" rx="0.04"/><polygon points="0.56,0.22 0.80,0.375 0.56,0.53"/></g>
+<g id="ba"><rect x="0.38" y="0.585" width="0.40" height="0.08" rx="0.04"/><polygon points="0.44,0.47 0.20,0.625 0.44,0.78"/></g>
+</defs>
+<style>
+svg{font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+text{font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+.mono{font-family:'Cascadia Mono',Consolas,'Courier New',monospace}
+.t{fill:#f0eee6}.m{fill:#a3a099}.b{font-weight:700}.sb{font-weight:600}
+.e{animation-duration:10s;animation-iteration-count:infinite;animation-timing-function:cubic-bezier(.65,0,.35,1)}
+.sl{animation-name:slide}
+.ka{animation-name:ka}
+.kb{animation-name:kb}
+.d1{animation-name:dim1}
+.d2{animation-name:dim2}
+.mt{animation-name:mt}
+.mb{animation-name:mb}
+.bar{transform-box:fill-box;transform-origin:0 50%;animation:grow 1.4s cubic-bezier(.22,1,.36,1) .3s both}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes slide{0%,30%{transform:translateY(0)}42%,67%{transform:translateY(84px)}79%,100%{transform:translateY(0)}}
+@keyframes ka{0%,30%{opacity:1}35%,71%{opacity:0}77%,100%{opacity:1}}
+@keyframes kb{0%,36%{opacity:0}43%,63%{opacity:1}68%,100%{opacity:0}}
+@keyframes dim1{0%,30%{opacity:1}42%,67%{opacity:.88}79%,100%{opacity:1}}
+@keyframes dim2{0%,30%{opacity:.88}42%,67%{opacity:1}79%,100%{opacity:.88}}
+@keyframes mt{0%,30%{transform:translateX(0)}42%{transform:translateX(1px)}42.01%,67%{transform:translateX(0)}79%{transform:translateX(1px)}79.01%,100%{transform:translateX(0)}}
+@keyframes mb{0%,30%{transform:translateX(0)}42%{transform:translateX(-1px)}42.01%,67%{transform:translateX(0)}79%{transform:translateX(-1px)}79.01%,100%{transform:translateX(0)}}
+@media (prefers-reduced-motion: reduce){ *{animation:none!important} }
+</style>
+
+<!-- panel -->
+<g clip-path="url(#panel)">
+<rect width="1280" height="420" fill="url(#bg)"/>
+<rect width="1280" height="420" fill="url(#grid)" mask="url(#gm)"/>
+<ellipse cx="925" cy="205" rx="470" ry="260" fill="url(#glow)"/>
+<ellipse cx="120" cy="40" rx="260" ry="160" fill="url(#glow)" opacity="0.5"/>
+</g>
+<rect x="0.5" y="0.5" width="1279" height="419" rx="19.5" fill="none" stroke="#3b3936"/>
+
+<!-- left: mark, title, tagline, chips -->
+<g transform="translate(64 84) scale(64)">
+<rect x="0.04" y="0.04" width="0.92" height="0.92" rx="0.24" fill="#d97757"/>
+<g clip-path="url(#mk)" fill="#fff">
+<g class="e mt"><use href="#ta"/><use href="#ta" x="-1"/></g>
+<g class="e mb"><use href="#ba"/><use href="#ba" x="1"/></g>
+</g>
+</g>
+<text x="148" y="136" font-size="56" class="t b" letter-spacing="-1">CCSwitcher<tspan fill="#d97757">X</tspan></text>
+<text font-size="22" class="t" x="64" y="200">Switch Claude Code between your own<tspan x="64" dy="31">accounts in one click.</tspan></text>
+<g font-size="13" class="sb">
+<rect x="64.5" y="262.5" width="82" height="28" rx="14" fill="#2a2927" stroke="#4a4743"/><text x="105.5" y="281" text-anchor="middle" fill="#e6e3d9">Windows</text>
+<rect x="157.5" y="262.5" width="78" height="28" rx="14" fill="#2a2927" stroke="#4a4743"/><text x="196.5" y="281" text-anchor="middle" fill="#e6e3d9">VS Code</text>
+<rect x="246.5" y="262.5" width="96" height="28" rx="14" fill="#2a2927" stroke="#4a4743"/><text x="294.5" y="281" text-anchor="middle" fill="#e6e3d9">Free · MIT</text>
+</g>
+<text x="64" y="333" font-size="12.5" class="m">Unofficial · not affiliated with Anthropic</text>
+
+<!-- window -->
+<g filter="url(#sh)"><rect x="612" y="28" width="620" height="320" rx="12" fill="#1f1e1d"/></g>
+<g clip-path="url(#win)">
+<rect x="612" y="28" width="620" height="320" fill="#1f1e1d"/>
+<rect x="612" y="28" width="620" height="28" fill="#262523"/>
+<rect x="612" y="56" width="620" height="1" fill="#3b3936"/>
+<g transform="translate(626 35) scale(14)"><rect x="0.04" y="0.04" width="0.92" height="0.92" rx="0.24" fill="#d97757"/><g fill="#fff"><use href="#ta"/><use href="#ba"/></g></g>
+<text x="648" y="47.5" font-size="11.5" class="m">Claude Accounts</text>
+<g stroke="#a3a099" stroke-width="1.2" fill="none" stroke-linecap="round"><path d="M1164 42H1174"/><rect x="1189.5" y="37.5" width="9" height="9" rx="1.5"/><path d="M1212 37.5L1221 46.5M1221 37.5L1212 46.5"/></g>
+
+<text x="632" y="86" font-size="19" class="t b">Claude Accounts</text>
+<text x="632" y="104" font-size="12.5" class="m">Choose which account Claude Code signs in with.</text>
+
+<!-- card bases -->
+<rect x="632.5" y="112.5" width="579" height="75" rx="12" fill="#2a2927" stroke="#3b3936"/>
+<rect x="632.5" y="196.5" width="579" height="75" rx="12" fill="#2a2927" stroke="#3b3936"/>
+<!-- emphasis outline glides -->
+<g class="e sl"><rect x="632.75" y="112.75" width="578.5" height="74.5" rx="12" fill="#d97757" fill-opacity="0.07" stroke="#d97757" stroke-width="1.5"/></g>
+
+<!-- card 1: Personal -->
+<g class="e d1" transform="translate(632 112)">
+<circle cx="34" cy="38" r="18" fill="#d97757"/><text x="34" y="44.5" font-size="17" class="b" text-anchor="middle" fill="#1f1e1d">P</text>
+<text x="64" y="33" font-size="15" class="t b">Personal</text>
+<text x="64" y="53" font-size="12" class="m">alex@example.com · Max 5x</text>
+<g font-size="11"><text x="288" y="25" class="m">Session</text><text x="338" y="25" class="t sb">64%</text><text x="456" y="25" font-size="9.5" class="m" text-anchor="end">resets in 3h 5m</text>
+<text x="288" y="49" class="m">Week</text><text x="338" y="49" class="t sb">34%</text><text x="456" y="49" font-size="9.5" class="m" text-anchor="end">resets Thu 5:00 PM</text></g>
+<rect x="288" y="30" width="168" height="6" rx="3" fill="#3b3936"/><rect class="bar" x="288" y="30" width="107.5" height="6" rx="3" fill="#5bbf8a"/>
+<rect x="288" y="54" width="168" height="6" rx="3" fill="#3b3936"/><rect class="bar" x="288" y="54" width="57" height="6" rx="3" fill="#5bbf8a"/>
+<g fill="#a3a099"><circle cx="550" cy="38" r="1.7"/><circle cx="557" cy="38" r="1.7"/><circle cx="564" cy="38" r="1.7"/></g>
+</g>
+
+<!-- card 2: Team -->
+<g class="e d2" opacity="0.88" transform="translate(632 196)">
+<circle cx="34" cy="38" r="18" fill="#6c8be0"/><text x="34" y="44.5" font-size="17" class="b" text-anchor="middle" fill="#14171f">T</text>
+<text x="64" y="33" font-size="15" class="t b">Team</text>
+<text x="64" y="53" font-size="12" class="m">alex@acme.example · Team · Acme Inc</text>
+<g font-size="11"><text x="288" y="25" class="m">Session</text><text x="338" y="25" class="t sb">11%</text><text x="456" y="25" font-size="9.5" class="m" text-anchor="end">resets in 4h 46m</text>
+<text x="288" y="49" class="m">Week</text><text x="338" y="49" class="t sb">27%</text><text x="456" y="49" font-size="9.5" class="m" text-anchor="end">resets Sat 4:00 PM</text></g>
+<rect x="288" y="30" width="168" height="6" rx="3" fill="#3b3936"/><rect class="bar" x="288" y="30" width="18.5" height="6" rx="3" fill="#5bbf8a"/>
+<rect x="288" y="54" width="168" height="6" rx="3" fill="#3b3936"/><rect class="bar" x="288" y="54" width="45.5" height="6" rx="3" fill="#5bbf8a"/>
+<g fill="#a3a099"><circle cx="550" cy="38" r="1.7"/><circle cx="557" cy="38" r="1.7"/><circle cx="564" cy="38" r="1.7"/></g>
+</g>
+
+<!-- Switch buttons (visible on the card that is not in use) -->
+<g class="e kb" opacity="0"><rect x="1104.5" y="138.5" width="66" height="23" rx="7" fill="#3b3936" stroke="#4f4c47"/><text x="1137.5" y="154" font-size="12" class="t sb" text-anchor="middle">Switch</text></g>
+<g class="e ka"><rect x="1104.5" y="222.5" width="66" height="23" rx="7" fill="#3b3936" stroke="#4f4c47"/><text x="1137.5" y="238" font-size="12" class="t sb" text-anchor="middle">Switch</text></g>
+<!-- IN USE pill glides -->
+<g class="e sl"><rect x="1104" y="138" width="67" height="24" rx="12" fill="#23382d" stroke="#5bbf8a" stroke-opacity="0.45"/><circle cx="1120" cy="150" r="3" fill="#5bbf8a"/><text x="1128" y="154" font-size="10.5" class="b" fill="#5bbf8a" letter-spacing="0.5">IN USE</text></g>
+
+<!-- footer -->
+<rect x="632" y="284" width="114" height="26" rx="8" fill="#d97757"/><text x="689" y="301.5" font-size="12.5" class="b" text-anchor="middle" fill="#1f1e1d">+ Add account</text>
+<rect x="756" y="284" width="124" height="26" rx="8" fill="#3b3936"/><text x="818" y="301.5" font-size="12.5" class="sb" text-anchor="middle" fill="#e6e3d9">&#8635; Refresh usage</text>
+<circle cx="636" cy="327" r="3" fill="#5bbf8a"/>
+<g font-size="12" class="m"><text x="646" y="331" class="e ka">Now using "Personal" (verified).</text><text x="646" y="331" class="e kb" opacity="0">Now using "Team" (verified).</text></g>
+</g>
+<rect x="612.5" y="28.5" width="619" height="319" rx="11.5" fill="none" stroke="#3b3936"/>
+
+<!-- editor status bar -->
+<rect x="612.5" y="358.5" width="619" height="33" rx="9" fill="#171615" stroke="#3b3936"/>
+<rect x="624" y="363" width="146" height="24" rx="6" fill="#2a2927"/>
+<g transform="translate(634 368) scale(14)"><rect x="0.04" y="0.04" width="0.92" height="0.92" rx="0.24" fill="#d97757"/><g fill="#fff"><use href="#ta"/><use href="#ba"/></g></g>
+<g font-size="12.5" class="t sb"><text x="656" y="379.5" class="e ka">Personal · 64%</text><text x="656" y="379.5" class="e kb" opacity="0">Team · 11%</text></g>
+<text x="1218" y="379.5" font-size="11.5" class="m" text-anchor="end">VS Code status bar</text>
+</svg>

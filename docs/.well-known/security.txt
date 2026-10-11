@@ -1,0 +1,4 @@
+Contact: https://github.com/MHJoy99/CCSwitcherX/security/advisories/new
+Expires: 2027-10-11T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://mhjoy99.github.io/CCSwitcherX/.well-known/security.txt

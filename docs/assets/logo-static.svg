@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img">
+  <title>CCSwitcherX logo</title>
+  <desc>Two white arrows, one pointing right above one pointing left, on a terracotta rounded square.</desc>
+  <rect x="10.24" y="10.24" width="235.52" height="235.52" rx="61.44" fill="#d97757"/>
+  <rect x="56.32" y="85.76" width="102.4" height="20.48" rx="10.24" fill="#ffffff"/>
+  <polygon points="143.36,56.32 204.8,96 143.36,135.68" fill="#ffffff"/>
+  <rect x="97.28" y="149.76" width="102.4" height="20.48" rx="10.24" fill="#ffffff"/>
+  <polygon points="112.64,120.32 51.2,160 112.64,199.68" fill="#ffffff"/>
+</svg>

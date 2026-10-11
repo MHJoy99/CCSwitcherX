@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" role="img">
+<title>Session and week usage bars for every account</title>
+<desc>Two usage bars, Session 64 percent and Week 34 percent. One bar rises through the amber and red thresholds and falls back on a loop. Green below 70 percent, amber 70 to 89, red 90 and above.</desc>
+<style>
+.h{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:22px;font-weight:700;fill:#f0eee6}
+.d{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;fill:#a3a099}
+.b{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:15px;font-weight:600;fill:#f0eee6}
+.m{font-family:'Cascadia Mono',Consolas,'Courier New',monospace;font-size:15px;font-weight:700}
+.bar{transform-box:fill-box;transform-origin:0 50%}
+.sBar{transform:scaleX(.64);fill:#5bbf8a;animation:sBar 7s ease-in-out infinite}
+.wBar{transform:scaleX(.34);fill:#5bbf8a;animation:wBar 7s ease-in-out infinite}
+.p1{opacity:1;fill:#5bbf8a;animation:p1 7s ease-in-out infinite}
+.p2{opacity:0;fill:#e0a84b;animation:p2 7s ease-in-out infinite}
+.p3{opacity:0;fill:#e5726b;animation:p3 7s ease-in-out infinite}
+.wl{opacity:1;fill:#5bbf8a;animation:wl 7s ease-in-out infinite}
+.tick{stroke:#4a4743;stroke-width:1}
+@keyframes sBar{0%,18%{transform:scaleX(.64);fill:#5bbf8a}42%,52%{transform:scaleX(.75);fill:#e0a84b}66%,84%{transform:scaleX(.93);fill:#e5726b}96%,100%{transform:scaleX(.64);fill:#5bbf8a}}
+@keyframes wBar{0%{transform:scaleX(0)}22%,86%{transform:scaleX(.34)}100%{transform:scaleX(0)}}
+@keyframes p1{0%,16%{opacity:1}22%,92%{opacity:0}98%,100%{opacity:1}}
+@keyframes p2{0%,36%{opacity:0}42%,54%{opacity:1}60%,100%{opacity:0}}
+@keyframes p3{0%,62%{opacity:0}66%,86%{opacity:1}92%,100%{opacity:0}}
+@keyframes wl{0%,8%{opacity:0}22%,86%{opacity:1}94%,100%{opacity:0}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+<defs>
+  <clipPath id="trS"><rect x="150" y="68" width="260" height="16" rx="8"/></clipPath>
+  <clipPath id="trW"><rect x="150" y="116" width="260" height="16" rx="8"/></clipPath>
+</defs>
+<rect x="1" y="1" width="478" height="298" rx="18" fill="#2a2927" stroke="#3b3936" stroke-width="2"/>
+<rect x="28" y="32" width="424" height="132" rx="14" fill="#1f1e1d"/>
+<text class="b" x="52" y="81">Session</text>
+<text class="b" x="52" y="129">Week</text>
+<rect x="150" y="68" width="260" height="16" rx="8" fill="#3b3936"/>
+<rect x="150" y="116" width="260" height="16" rx="8" fill="#3b3936"/>
+<rect class="bar sBar" x="150" y="68" width="260" height="16" clip-path="url(#trS)"/>
+<rect class="bar wBar" x="150" y="116" width="260" height="16" clip-path="url(#trW)"/>
+<line class="tick" x1="332" y1="62" x2="332" y2="90"/>
+<line class="tick" x1="384" y1="62" x2="384" y2="90"/>
+<line class="tick" x1="332" y1="110" x2="332" y2="138"/>
+<line class="tick" x1="384" y1="110" x2="384" y2="138"/>
+<text class="m p1" x="440" y="81" text-anchor="end">64%</text>
+<text class="m p2" x="440" y="81" text-anchor="end">75%</text>
+<text class="m p3" x="440" y="81" text-anchor="end">93%</text>
+<text class="m wl" x="440" y="129" text-anchor="end">34%</text>
+<text class="h" x="28" y="206">Usage for every account</text>
+<text class="d" x="28" y="232">Session and weekly bars with reset times,</text>
+<text class="d" x="28" y="252">per account.</text>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" role="img">
+<title>One-click switch between Personal and Team accounts</title>
+<desc>Two account buttons, Personal and Team. An IN USE marker slides from one to the other on a loop. Unofficial tool for Claude Code.</desc>
+<style>
+.h{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:22px;font-weight:700;fill:#f0eee6}
+.d{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;fill:#a3a099}
+.b{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:15px;font-weight:600;fill:#f0eee6}
+.k{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;fill:#5bbf8a}
+.slide{animation:slide 7s ease-in-out infinite}
+@keyframes slide{0%,40%{transform:translateX(0)}50%,90%{transform:translateX(208px)}100%{transform:translateX(0)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+<rect x="1" y="1" width="478" height="298" rx="18" fill="#2a2927" stroke="#3b3936" stroke-width="2"/>
+<rect x="28" y="32" width="424" height="132" rx="14" fill="#1f1e1d"/>
+<rect x="66" y="60" width="140" height="40" rx="20" fill="#3b3936"/>
+<rect x="274" y="60" width="140" height="40" rx="20" fill="#3b3936"/>
+<text class="b" x="136" y="85" text-anchor="middle">Personal</text>
+<text class="b" x="344" y="85" text-anchor="middle">Team</text>
+<g class="slide">
+  <rect x="60" y="54" width="152" height="52" rx="26" fill="none" stroke="#d97757" stroke-width="2"/>
+  <rect x="100" y="112" width="72" height="20" rx="10" fill="#23382d" stroke="#5bbf8a" stroke-width="1"/>
+  <text class="k" x="136" y="126" text-anchor="middle">IN USE</text>
+</g>
+<text class="h" x="28" y="206">One-click switch</text>
+<text class="d" x="28" y="232">Personal, Team or any account you add.</text>
+<text class="d" x="28" y="252">A swap takes about 25 ms.</text>
+</svg>

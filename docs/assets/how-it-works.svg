@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" role="img">
+  <title>How CCSwitcherX switches accounts</title>
+  <desc>Animated explainer, 12 seconds. Step 1 backs up the current login into its saved card. Step 2 takes Claude Code's own lock. Step 3 swaps the claudeAiOauth and oauthAccount entries for the Team login, and the IN USE pill moves to Team. The lock is released and the final state rests. Fictional data only.</desc>
+  <style>
+    text{font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+    .m{font-family:'Cascadia Mono',Consolas,'Courier New',monospace}
+    .head{font-size:11px;letter-spacing:1.2px;fill:#a3a099}
+    .frame{fill:none;stroke:#3b3936;stroke-width:1.5}
+    .card{fill:#2a2927;stroke:#3b3936;stroke-width:1}
+    .name{font-size:15px;font-weight:600;fill:#f0eee6}
+    .plan{font-size:12px;fill:#a3a099}
+    .av{font-size:14px;font-weight:700;fill:#1f1e1d}
+    .file{font-size:11px;fill:#f0eee6}
+    .dim{fill:#3b3936}
+    .untouched{font-size:10px;font-style:italic;fill:#a3a099}
+    .cap{font-size:12px;fill:#a3a099}
+    .stepnum{font-size:12px;font-weight:700;fill:#f0eee6}
+    .steplbl{font-size:14px;font-weight:600;fill:#f0eee6}
+    .ring{fill:none;stroke:#d97757;stroke-width:2}
+    .lockbody{fill:#2a2927;stroke:#3b3936;stroke-width:2}
+    .shackle{fill:none;stroke:#a3a099;stroke-width:4;stroke-linecap:round;transform:translateY(-10px)}
+    .flow{fill:none;stroke:#6c8be0;stroke-width:2;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:0}
+    .keyrow{fill:#6c8be0;fill-opacity:.16;stroke:#6c8be0;stroke-width:1.5}
+    .pillbox{fill:#2a2927;stroke:#3b3936;stroke-width:1}
+    .pilltxt{font-size:10px;font-weight:700;letter-spacing:1px;fill:#2a2927}
+    .track{fill:#3b3936}
+    .prog{fill:#d97757;transform-box:fill-box;transform-origin:0 50%;transform:scaleX(1)}
+    .token{fill:#d97757;opacity:0}
+
+    #r1{animation:r1 12s ease-in-out infinite}
+    #r2{animation:r2 12s ease-in-out infinite}
+    #r3{animation:r3 12s ease-in-out infinite}
+    #n1{animation:n1 12s ease-in-out infinite}
+    #n2{animation:n2 12s ease-in-out infinite}
+    #n3{animation:n3 12s ease-in-out infinite}
+    #l1{animation:l1 12s ease-in-out infinite}
+    #l2{animation:l2 12s ease-in-out infinite}
+    #l3{animation:l3 12s ease-in-out infinite}
+    #shackle{animation:shackle 12s ease-in-out infinite}
+    #lockbody{animation:lockbody 12s ease-in-out infinite}
+    #token{animation:token 12s ease-in-out infinite}
+    #pillA-box{animation:pillAbox 12s ease-in-out infinite}
+    #pillA-txt{animation:pillAtxt 12s ease-in-out infinite}
+    #pillB-box{animation:pillBbox 12s ease-in-out infinite}
+    #pillB-txt{animation:pillBtxt 12s ease-in-out infinite}
+    #fA,#fB{animation:flow 12s ease-in-out infinite}
+    #kA,#kB{animation:key 12s ease-in-out infinite}
+    #prog{animation:prog 12s ease-in-out infinite}
+
+    @keyframes r1{0%,5%{fill:none;stroke:#3b3936}6%,28%{fill:#d97757;stroke:#d97757}29%,96%{fill:none;stroke:#d97757}100%{fill:none;stroke:#3b3936}}
+    @keyframes r2{0%,30%{fill:none;stroke:#3b3936}31%,45%{fill:#d97757;stroke:#d97757}46%,96%{fill:none;stroke:#d97757}100%{fill:none;stroke:#3b3936}}
+    @keyframes r3{0%,46%{fill:none;stroke:#3b3936}47%,74%{fill:#d97757;stroke:#d97757}75%,96%{fill:none;stroke:#d97757}100%{fill:none;stroke:#3b3936}}
+    @keyframes n1{0%,5%{fill:#a3a099}6%,28%{fill:#1f1e1d}29%,96%{fill:#f0eee6}100%{fill:#a3a099}}
+    @keyframes n2{0%,30%{fill:#a3a099}31%,45%{fill:#1f1e1d}46%,96%{fill:#f0eee6}100%{fill:#a3a099}}
+    @keyframes n3{0%,46%{fill:#a3a099}47%,74%{fill:#1f1e1d}75%,96%{fill:#f0eee6}100%{fill:#a3a099}}
+    @keyframes l1{0%,5%{fill:#a3a099}6%,96%{fill:#f0eee6}100%{fill:#a3a099}}
+    @keyframes l2{0%,30%{fill:#a3a099}31%,96%{fill:#f0eee6}100%{fill:#a3a099}}
+    @keyframes l3{0%,46%{fill:#a3a099}47%,96%{fill:#f0eee6}100%{fill:#a3a099}}
+    @keyframes shackle{0%,30%{transform:translateY(-10px)}35%,75%{transform:translateY(0)}80%,100%{transform:translateY(-10px)}}
+    @keyframes lockbody{0%,30%{stroke:#3b3936}35%,75%{stroke:#d97757}80%,100%{stroke:#3b3936}}
+    @keyframes token{0%,4%{opacity:0;transform:translate(0,0)}6%{opacity:1;transform:translate(0,0)}26%{opacity:1;transform:translate(-555px,23px)}29%,100%{opacity:0;transform:translate(-555px,23px)}}
+    @keyframes pillAbox{0%,52%{fill:#23382d;stroke:#5bbf8a}60%,100%{fill:#2a2927;stroke:#3b3936}}
+    @keyframes pillAtxt{0%,52%{fill:#5bbf8a}60%,100%{fill:#2a2927}}
+    @keyframes pillBbox{0%,60%{fill:#2a2927;stroke:#3b3936}68%,96%{fill:#23382d;stroke:#5bbf8a}100%{fill:#2a2927;stroke:#3b3936}}
+    @keyframes pillBtxt{0%,60%{fill:#2a2927}68%,96%{fill:#5bbf8a}100%{fill:#2a2927}}
+    @keyframes flow{0%{stroke-dashoffset:100;stroke-opacity:0}46%{stroke-dashoffset:100;stroke-opacity:1}62%,92%{stroke-dashoffset:0;stroke-opacity:1}96%,100%{stroke-dashoffset:0;stroke-opacity:0}}
+    @keyframes key{0%,66%{fill:#d97757;stroke:#d97757}72%,96%{fill:#6c8be0;stroke:#6c8be0}100%{fill:#d97757;stroke:#d97757}}
+    @keyframes prog{0%,4%{transform:scaleX(0)}29%{transform:scaleX(.333)}46%{transform:scaleX(.667)}75%,96%{transform:scaleX(1)}100%{transform:scaleX(0)}}
+
+    @media (prefers-reduced-motion: reduce){ *{animation:none!important} }
+  </style>
+
+  <rect x="0.5" y="0.5" width="959" height="439" rx="16" fill="#1f1e1d" stroke="#3b3936" stroke-width="1"/>
+
+  <g transform="translate(0,-26)">
+  <!-- column headings -->
+  <text class="head" x="60" y="110">SAVED ACCOUNTS</text>
+  <text class="head" x="480" y="110" text-anchor="middle">SWITCH</text>
+  <text class="head" x="680" y="110">CLAUDE CODE</text>
+
+  <!-- A: saved accounts -->
+  <rect class="frame" x="40" y="84" width="260" height="256" rx="12"/>
+  <rect class="card" x="60" y="128" width="220" height="70" rx="10"/>
+  <circle cx="92" cy="163" r="16" fill="#d97757"/>
+  <text class="av" x="92" y="168" text-anchor="middle">P</text>
+  <text class="name" x="120" y="159">Personal</text>
+  <text class="plan" x="120" y="180">Max 5x</text>
+
+  <rect class="card" x="60" y="212" width="220" height="70" rx="10"/>
+  <circle cx="92" cy="247" r="16" fill="#6c8be0"/>
+  <text class="av" x="92" y="252" text-anchor="middle">T</text>
+  <text class="name" x="120" y="243">Team</text>
+  <text class="plan" x="120" y="264">Team · Acme Inc</text>
+
+  <!-- IN USE pill: lit on Personal, then handed over to Team -->
+  <rect id="pillA-box" class="pillbox" x="196" y="138" width="64" height="18" rx="9"/>
+  <text id="pillA-txt" class="pilltxt" x="228" y="151" text-anchor="middle">IN USE</text>
+  <rect id="pillB-box" class="pillbox" x="196" y="222" width="64" height="18" rx="9" fill="#23382d" stroke="#5bbf8a"/>
+  <text id="pillB-txt" class="pilltxt" x="228" y="235" text-anchor="middle" style="fill:#5bbf8a">IN USE</text>
+
+  <!-- padlock + DPAPI caption -->
+  <path d="M63 304 V301 a3 3 0 0 1 6 0 V304" fill="none" stroke="#a3a099" stroke-width="1.6"/>
+  <rect x="60" y="304" width="12" height="10" rx="2" fill="#a3a099"/>
+  <text class="cap" x="80" y="313">encrypted with Windows DPAPI</text>
+
+  <!-- B: the lock (open in the final state) -->
+  <path id="shackle" class="shackle" d="M466 196V184a14 14 0 0 1 28 0V196"/>
+  <rect id="lockbody" class="lockbody" x="456" y="196" width="48" height="38" rx="7"/>
+  <circle cx="480" cy="211" r="4" fill="#a3a099"/>
+  <rect x="478" y="212" width="4" height="9" rx="2" fill="#a3a099"/>
+  <text class="cap" x="480" y="274" text-anchor="middle">Claude Code's own lock held</text>
+
+  <!-- flows: Team login into the two highlighted keys -->
+  <path id="fA" class="flow" pathLength="100" d="M282 240 C420 240 540 163 692 163"/>
+  <path id="fB" class="flow" pathLength="100" d="M282 256 C420 256 540 247 692 247"/>
+
+  <!-- C: Claude Code files -->
+  <rect class="frame" x="660" y="84" width="260" height="256" rx="12"/>
+  <rect class="card" x="680" y="128" width="220" height="70" rx="10"/>
+  <text class="file m" x="694" y="146">~/.claude/.credentials.json</text>
+  <rect id="kA" class="keyrow" x="694" y="154" width="192" height="18" rx="4"/>
+  <text class="file m" x="704" y="167">claudeAiOauth</text>
+  <rect class="dim" x="694" y="186" width="120" height="4" rx="2"/>
+  <text class="untouched" x="886" y="191" text-anchor="end">untouched</text>
+
+  <rect class="card" x="680" y="212" width="220" height="70" rx="10"/>
+  <text class="file m" x="694" y="230">~/.claude.json</text>
+  <rect id="kB" class="keyrow" x="694" y="238" width="192" height="18" rx="4"/>
+  <text class="file m" x="704" y="251">oauthAccount</text>
+  <rect class="dim" x="694" y="270" width="120" height="4" rx="2"/>
+  <text class="untouched" x="886" y="275" text-anchor="end">untouched</text>
+
+  <!-- token dot: the current login backed up into Personal's card -->
+  <circle id="token" class="token" cx="795" cy="163" r="8"/>
+
+  <!-- step indicator row -->
+  <circle id="r1" class="ring" cx="73" cy="368" r="13"/>
+  <text id="n1" class="stepnum" x="73" y="372" text-anchor="middle">1</text>
+  <text id="l1" class="steplbl" x="96" y="373">Back up the current login</text>
+
+  <circle id="r2" class="ring" cx="373" cy="368" r="13"/>
+  <text id="n2" class="stepnum" x="373" y="372" text-anchor="middle">2</text>
+  <text id="l2" class="steplbl" x="396" y="373">Take the lock</text>
+
+  <circle id="r3" class="ring" cx="673" cy="368" r="13"/>
+  <text id="n3" class="stepnum" x="673" y="372" text-anchor="middle">3</text>
+  <text id="l3" class="steplbl" x="696" y="373">Swap two entries</text>
+
+  <rect class="track" x="60" y="402" width="840" height="4" rx="2"/>
+  <rect id="prog" class="prog" x="60" y="402" width="840" height="4" rx="2"/>
+  </g>
+</svg>

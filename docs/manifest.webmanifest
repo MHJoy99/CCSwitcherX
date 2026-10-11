@@ -1,0 +1,23 @@
+{
+  "name": "CCSwitcherX",
+  "short_name": "CCSwitcherX",
+  "description": "Switch Claude Code between your own accounts in one click. Unofficial, free, open source, Windows.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "browser",
+  "background_color": "#1f1e1d",
+  "theme_color": "#1f1e1d",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

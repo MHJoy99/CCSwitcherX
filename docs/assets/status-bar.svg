@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" role="img">
+  <title>Switching accounts from the status bar</title>
+  <desc>A generic dark code editor. Clicking the status bar item Personal 64% opens a picker of saved accounts; choosing Team switches the status item to Team 11%. Fictional data only.</desc>
+  <style>
+    text { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    .mono { font-family: 'Cascadia Mono', Consolas, 'Courier New', monospace; }
+    .rowname { font-size: 13px; font-weight: 700; fill: #f0eee6; }
+    .rowmail { font-size: 11.5px; font-weight: 400; fill: #a3a099; }
+    .rowuse { font-size: 11px; fill: #a3a099; }
+    .act { font-size: 13px; fill: #f0eee6; }
+    .stat { font-size: 13px; font-weight: 600; fill: #f0eee6; }
+
+    /* Static (reduced-motion) state: picker open, Personal selected. */
+    .picker { opacity: 1; transform: translateY(0); animation: picker 12s ease-in-out infinite; }
+    .st-team { opacity: 0; animation: st-team 12s ease-in-out infinite; }
+    .st-personal { opacity: 1; animation: st-personal 12s ease-in-out infinite; }
+    .cursor { opacity: 0; transform: translate(360px, 220px); animation: cursor 12s ease-in-out infinite; }
+    .rip { opacity: 0; transform-box: fill-box; transform-origin: center; animation: 12s infinite; }
+    .rip-status { animation-name: rip-status; }
+    .rip-team { animation-name: rip-team; }
+
+    @keyframes picker {
+      0%, 16% { opacity: 0; transform: translateY(12px); }
+      22%, 52% { opacity: 1; transform: translateY(0); }
+      56%, 100% { opacity: 0; transform: translateY(10px); }
+    }
+    @keyframes st-personal {
+      0%, 50% { opacity: 1; }
+      52%, 71% { opacity: 0; }
+      73%, 100% { opacity: 1; }
+    }
+    @keyframes st-team {
+      0%, 52% { opacity: 0; }
+      54%, 70% { opacity: 1; }
+      72%, 100% { opacity: 0; }
+    }
+    @keyframes cursor {
+      0% { opacity: 1; transform: translate(360px, 220px); }
+      17% { opacity: 1; transform: translate(790px, 380px); }
+      30% { opacity: 1; transform: translate(790px, 380px); }
+      45% { opacity: 1; transform: translate(652px, 190px); }
+      53% { opacity: 1; transform: translate(652px, 190px); }
+      54%, 97% { opacity: 0; transform: translate(360px, 220px); }
+      98% { opacity: 0; transform: translate(360px, 220px); }
+      99%, 100% { opacity: 1; transform: translate(360px, 220px); }
+    }
+    @keyframes rip-status {
+      0%, 17% { opacity: 0; transform: scale(.2); }
+      18% { opacity: .8; transform: scale(.4); }
+      23%, 100% { opacity: 0; transform: scale(1.6); }
+    }
+    @keyframes rip-team {
+      0%, 45% { opacity: 0; transform: scale(.2); }
+      46% { opacity: .8; transform: scale(.4); }
+      51%, 100% { opacity: 0; transform: scale(1.6); }
+    }
+    @media (prefers-reduced-motion: reduce) { *{ animation: none !important; } }
+  </style>
+
+  <!-- canvas -->
+  <rect x="0" y="0" width="960" height="420" rx="16" fill="#1f1e1d"/>
+
+  <!-- editor window -->
+  <rect x="40" y="24" width="880" height="372" rx="12" fill="#2a2927" stroke="#3b3936"/>
+  <rect x="41" y="25" width="878" height="40" rx="11" fill="#242321"/>
+  <circle cx="62" cy="45" r="5" fill="#4a4742"/>
+  <circle cx="78" cy="45" r="5" fill="#4a4742"/>
+  <circle cx="94" cy="45" r="5" fill="#4a4742"/>
+  <rect x="112" y="32" width="112" height="26" rx="6" fill="#2a2927"/>
+  <rect x="126" y="41" width="58" height="8" rx="4" fill="#5b574f"/>
+  <rect x="236" y="32" width="112" height="26" rx="6" fill="#242321"/>
+  <rect x="250" y="41" width="70" height="8" rx="4" fill="#4a4742"/>
+  <rect x="360" y="32" width="112" height="26" rx="6" fill="#242321"/>
+  <rect x="374" y="41" width="50" height="8" rx="4" fill="#4a4742"/>
+
+  <!-- code lines (grey placeholders) -->
+  <g fill="#4a4742">
+    <rect x="66" y="88" width="12" height="7" rx="3"/>
+    <rect x="66" y="112" width="12" height="7" rx="3"/>
+    <rect x="66" y="136" width="12" height="7" rx="3"/>
+    <rect x="66" y="160" width="12" height="7" rx="3"/>
+    <rect x="66" y="184" width="12" height="7" rx="3"/>
+    <rect x="66" y="208" width="12" height="7" rx="3"/>
+    <rect x="66" y="232" width="12" height="7" rx="3"/>
+    <rect x="66" y="256" width="12" height="7" rx="3"/>
+    <rect x="66" y="280" width="12" height="7" rx="3"/>
+    <rect x="66" y="304" width="12" height="7" rx="3"/>
+    <rect x="66" y="328" width="12" height="7" rx="3"/>
+  </g>
+  <g fill="#3b3936">
+    <rect x="104" y="88" width="150" height="8" rx="4"/>
+    <rect x="104" y="112" width="90" height="8" rx="4"/>
+    <rect x="120" y="136" width="120" height="8" rx="4"/>
+    <rect x="136" y="160" width="200" height="8" rx="4"/>
+    <rect x="136" y="184" width="170" height="8" rx="4"/>
+    <rect x="136" y="208" width="230" height="8" rx="4"/>
+    <rect x="120" y="232" width="60" height="8" rx="4"/>
+    <rect x="104" y="280" width="130" height="8" rx="4"/>
+    <rect x="120" y="304" width="180" height="8" rx="4"/>
+    <rect x="136" y="328" width="240" height="8" rx="4"/>
+  </g>
+
+  <!-- status bar -->
+  <rect x="41" y="366" width="878" height="29" fill="#242321"/>
+  <line x1="41" y1="366" x2="919" y2="366" stroke="#3b3936"/>
+  <g fill="#4a4742">
+    <rect x="58" y="377" width="46" height="7" rx="3"/>
+    <rect x="118" y="377" width="72" height="7" rx="3"/>
+    <rect x="204" y="377" width="40" height="7" rx="3"/>
+    <rect x="258" y="377" width="56" height="7" rx="3"/>
+    <rect x="328" y="377" width="36" height="7" rx="3"/>
+  </g>
+
+  <!-- status item -->
+  <rect x="706" y="370" width="182" height="22" rx="5" fill="#3b3936"/>
+  <g transform="translate(716 375) scale(12)">
+    <rect x="0.04" y="0.04" width="0.92" height="0.92" rx="0.24" fill="#d97757"/>
+    <rect x="0.22" y="0.335" width="0.40" height="0.08" rx="0.04" fill="#ffffff"/>
+    <polygon points="0.56,0.22 0.80,0.375 0.56,0.53" fill="#ffffff"/>
+    <rect x="0.38" y="0.585" width="0.40" height="0.08" rx="0.04" fill="#ffffff"/>
+    <polygon points="0.44,0.47 0.20,0.625 0.44,0.78" fill="#ffffff"/>
+  </g>
+  <text class="stat st-personal" x="736" y="385">Personal · 64%</text>
+  <text class="stat st-team" x="736" y="385">Team · 11%</text>
+
+  <!-- picker -->
+  <g class="picker">
+    <rect x="600" y="110" width="312" height="234" rx="10" fill="#2a2927" stroke="#4a4742"/>
+
+    <text x="616" y="136" class="rowname" font-size="14" fill="#5bbf8a">✓</text>
+    <text x="632" y="136" class="rowname">Personal<tspan class="rowmail" dx="8">alex@example.com · Max 5x (in use)</tspan></text>
+    <text x="632" y="153" class="rowuse">Session 64% · Week 34%</text>
+
+    <text x="632" y="186" class="rowname">Team<tspan class="rowmail" dx="8">alex@acme.example · Team · Acme Inc</tspan></text>
+    <text x="632" y="203" class="rowuse">Session 11% · Week 27%</text>
+
+    <line x1="616" y1="222" x2="896" y2="222" stroke="#3b3936"/>
+
+    <text x="632" y="248" class="act">Add account…</text>
+    <text x="632" y="274" class="act">Refresh usage</text>
+    <text x="632" y="300" class="act">Open manager window</text>
+    <text x="632" y="326" class="act">Run self-check</text>
+  </g>
+
+  <!-- click ripples -->
+  <circle class="rip rip-status" cx="790" cy="381" r="14" fill="none" stroke="#d97757" stroke-width="2"/>
+  <circle class="rip rip-team" cx="652" cy="190" r="14" fill="none" stroke="#d97757" stroke-width="2"/>
+
+  <!-- pointer -->
+  <g class="cursor">
+    <path d="M0 0 V17 L4.6 12.8 L7.7 19.6 L10.6 18.3 L7.6 11.6 H13.6 Z" fill="#f0eee6" stroke="#1f1e1d" stroke-width="1.2" stroke-linejoin="round"/>
+  </g>
+</svg>

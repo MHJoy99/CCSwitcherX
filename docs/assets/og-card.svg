@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img">
+  <title>CCSwitcherX social card: switch Claude Code between your own accounts in one click</title>
+  <desc>Dark warm card. Left: the CCSwitcherX logo mark, the title, a two-line subtitle and three chips (Windows, VS Code, Free MIT). Right: a mock of the Claude Accounts window with a Personal account in use and a Team account ready to switch. Unofficial, not affiliated with Anthropic.</desc>
+  <defs>
+    <radialGradient id="glow" cx="300" cy="300" r="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d97757" stop-opacity="0.16"/>
+      <stop offset="0.55" stop-color="#d97757" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#d97757" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  <style>
+    .sans { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    .mono { font-family: 'Cascadia Mono', Consolas, 'Courier New', monospace; }
+  </style>
+
+  <!-- background -->
+  <rect width="100%" height="100%" fill="#1f1e1d"/>
+  <rect width="100%" height="100%" fill="url(#glow)"/>
+
+  <!-- left column -->
+  <g transform="translate(60 90) scale(120)">
+    <rect x="0.04" y="0.04" width="0.92" height="0.92" rx="0.24" fill="#d97757"/>
+    <rect x="0.22" y="0.335" width="0.40" height="0.08" rx="0.04" fill="#ffffff"/>
+    <polygon points="0.56,0.22 0.80,0.375 0.56,0.53" fill="#ffffff"/>
+    <rect x="0.38" y="0.585" width="0.40" height="0.08" rx="0.04" fill="#ffffff"/>
+    <polygon points="0.44,0.47 0.20,0.625 0.44,0.78" fill="#ffffff"/>
+  </g>
+
+  <text x="60" y="330" class="sans" font-size="84" font-weight="700" letter-spacing="-1.5" fill="#f0eee6">CCSwitcher<tspan fill="#d97757">X</tspan></text>
+
+  <text class="sans" font-size="36" fill="#a3a099">
+    <tspan x="60" y="390">Switch Claude Code between</tspan>
+    <tspan x="60" y="432">your own accounts in one click.</tspan>
+  </text>
+
+  <g class="sans" font-size="15" fill="#a3a099" text-anchor="middle">
+    <rect x="60" y="468" width="120" height="38" rx="19" fill="#2a2927" stroke="#3b3936"/>
+    <text x="120" y="492">Windows</text>
+    <rect x="196" y="468" width="120" height="38" rx="19" fill="#2a2927" stroke="#3b3936"/>
+    <text x="256" y="492">VS Code</text>
+    <rect x="332" y="468" width="144" height="38" rx="19" fill="#2a2927" stroke="#3b3936"/>
+    <text x="404" y="492">Free · MIT</text>
+  </g>
+
+  <text x="60" y="570" class="sans" font-size="15" fill="#7d7a73">Unofficial · not affiliated with Anthropic</text>
+
+  <!-- right column: app window mock -->
+  <g transform="translate(690 120)" filter="url(#shadow)">
+    <rect width="450" height="420" rx="16" fill="#2a2927" stroke="#3b3936"/>
+  </g>
+  <g transform="translate(690 120)">
+    <path d="M0 16 Q0 0 16 0 H434 Q450 0 450 16 V46 H0 Z" fill="#242322"/>
+    <line x1="0" y1="46" x2="450" y2="46" stroke="#3b3936"/>
+    <rect x="16" y="14" width="18" height="18" rx="5" fill="#d97757"/>
+    <text x="42" y="30" class="sans" font-size="14" font-weight="600" fill="#f0eee6">Claude Accounts</text>
+    <text x="18" y="76" class="sans" font-size="13" fill="#a3a099">Choose which account Claude Code signs in with.</text>
+
+    <!-- Personal card (in use) -->
+    <rect x="18" y="96" width="414" height="130" rx="14" fill="#1f1e1d" stroke="#3b3936"/>
+    <circle cx="50" cy="128" r="20" fill="#d97757"/>
+    <text x="50" y="134" text-anchor="middle" class="sans" font-size="17" font-weight="700" fill="#1f1e1d">P</text>
+    <text x="86" y="124" class="sans" font-size="17" font-weight="700" fill="#f0eee6">Personal</text>
+    <text x="86" y="145" class="sans" font-size="13" fill="#a3a099">alex@example.com · Max 5x</text>
+    <rect x="332" y="110" width="82" height="24" rx="12" fill="#23382d"/>
+    <text x="373" y="126" text-anchor="middle" class="sans" font-size="11" font-weight="700" letter-spacing="1" fill="#5bbf8a">IN USE</text>
+    <text x="38" y="180" class="sans" font-size="12" fill="#a3a099">Session</text>
+    <rect x="110" y="172" width="250" height="8" rx="4" fill="#3b3936"/>
+    <rect x="110" y="172" width="160" height="8" rx="4" fill="#5bbf8a"/>
+    <text x="420" y="181" text-anchor="end" class="mono" font-size="12" fill="#f0eee6">64%</text>
+    <text x="38" y="206" class="sans" font-size="12" fill="#a3a099">Week</text>
+    <rect x="110" y="198" width="250" height="8" rx="4" fill="#3b3936"/>
+    <rect x="110" y="198" width="85" height="8" rx="4" fill="#5bbf8a"/>
+    <text x="420" y="207" text-anchor="end" class="mono" font-size="12" fill="#f0eee6">34%</text>
+
+    <!-- Team card (switch) -->
+    <rect x="18" y="242" width="414" height="130" rx="14" fill="#1f1e1d" stroke="#3b3936"/>
+    <circle cx="50" cy="274" r="20" fill="#6c8be0"/>
+    <text x="50" y="280" text-anchor="middle" class="sans" font-size="17" font-weight="700" fill="#1f1e1d">T</text>
+    <text x="86" y="270" class="sans" font-size="17" font-weight="700" fill="#f0eee6">Team</text>
+    <text x="86" y="291" class="sans" font-size="13" fill="#a3a099">alex@acme.example · Team</text>
+    <rect x="330" y="256" width="84" height="30" rx="8" fill="none" stroke="#d97757" stroke-width="1.5"/>
+    <text x="372" y="276" text-anchor="middle" class="sans" font-size="13" font-weight="700" fill="#d97757">Switch</text>
+    <text x="38" y="326" class="sans" font-size="12" fill="#a3a099">Session</text>
+    <rect x="110" y="318" width="250" height="8" rx="4" fill="#3b3936"/>
+    <rect x="110" y="318" width="28" height="8" rx="4" fill="#5bbf8a"/>
+    <text x="420" y="327" text-anchor="end" class="mono" font-size="12" fill="#f0eee6">11%</text>
+    <text x="38" y="352" class="sans" font-size="12" fill="#a3a099">Week</text>
+    <rect x="110" y="344" width="250" height="8" rx="4" fill="#3b3936"/>
+    <rect x="110" y="344" width="68" height="8" rx="4" fill="#5bbf8a"/>
+    <text x="420" y="353" text-anchor="end" class="mono" font-size="12" fill="#f0eee6">27%</text>
+
+    <!-- footer -->
+    <text x="18" y="404" class="sans" font-size="14" font-weight="700" fill="#d97757">+ Add account</text>
+    <text x="168" y="404" class="sans" font-size="14" fill="#a3a099">↻ Refresh usage</text>
+  </g>
+</svg>

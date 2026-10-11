@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CCSwitcherX: Switch Claude Code Accounts in One Click</title>
+<meta name="description" content="CCSwitcherX is a free, open-source Windows tool that switches Claude Code between your own saved accounts in one click, with a VS Code status bar.">
+<meta name="author" content="MHJoy99">
+<meta name="keywords" content="CCSwitcherX, Claude Code, switch Claude accounts, Claude Code account switcher, Claude Max, Claude Team, VS Code status bar, Windows, DPAPI, open source">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<link rel="canonical" href="https://mhjoy99.github.io/CCSwitcherX/">
+<meta name="theme-color" content="#f5f4ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1f1e1d" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="site.css">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CCSwitcherX">
+<meta property="og:title" content="CCSwitcherX: Switch Claude Code Accounts in One Click">
+<meta property="og:description" content="CCSwitcherX is a free, open-source Windows tool that switches Claude Code between your own saved accounts in one click, with a VS Code status bar.">
+<meta property="og:url" content="https://mhjoy99.github.io/CCSwitcherX/">
+<meta property="og:image" content="https://mhjoy99.github.io/CCSwitcherX/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="CCSwitcherX window and VS Code status bar switching between a personal and a Team Claude Code account">
+<meta property="og:locale" content="en_US">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CCSwitcherX: Switch Claude Code Accounts in One Click">
+<meta name="twitter:description" content="CCSwitcherX is a free, open-source Windows tool that switches Claude Code between your own saved accounts in one click, with a VS Code status bar.">
+<meta name="twitter:image" content="https://mhjoy99.github.io/CCSwitcherX/og-image.png">
+<meta name="twitter:image:alt" content="CCSwitcherX window and VS Code status bar switching between a personal and a Team Claude Code account">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "@id": "https://mhjoy99.github.io/CCSwitcherX/#app",
+  "name": "CCSwitcherX",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Windows 10, Windows 11",
+  "softwareVersion": "1.1.0",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "license": "https://opensource.org/licenses/MIT",
+  "isAccessibleForFree": true,
+  "author": { "@type": "Person", "name": "MHJoy99", "url": "https://github.com/MHJoy99" },
+  "url": "https://mhjoy99.github.io/CCSwitcherX/",
+  "downloadUrl": "https://github.com/MHJoy99/CCSwitcherX/releases/latest",
+  "codeRepository": "https://github.com/MHJoy99/CCSwitcherX",
+  "screenshot": "https://mhjoy99.github.io/CCSwitcherX/og-image.png",
+  "featureList": [
+    "Switch the Claude Code login between saved accounts in one click",
+    "Windows window and VS Code status-bar extension",
+    "Saved logins encrypted with Windows DPAPI",
+    "Backup before every switch and rollback on a failed write",
+    "Session and week usage per account with reset times",
+    "Command line tool with list, status, switch, usage, add, save, rename, remove, doctor and --json",
+    "Self-check that verifies login files, encryption and Claude Code lock names"
+  ],
+  "description": "Free, open-source (MIT) Windows tool that switches the Claude Code login between your own saved accounts, such as a personal Max plan and a work Team plan, in one click."
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "@id": "https://mhjoy99.github.io/CCSwitcherX/#faq",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is CCSwitcherX?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "CCSwitcherX is a free, open-source (MIT) Windows tool that switches the Claude Code login between your own saved accounts, for example a personal Max plan and a work Team plan, in one click. It has a small window and a VS Code status-bar extension, and it needs nothing beyond Python 3.9 or newer."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I switch between a personal and a Team Claude account in VS Code?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Install CCSwitcherX, sign in to each account once with Add account, then click the account name in the VS Code status bar and pick the other account. The swap takes a fraction of a second and VS Code does not need a restart. Open Claude Code chats pick up the new account on their next message; if one does not, start a new chat."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do I have to log in again every time I switch?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. You sign in once per account. CCSwitcherX keeps each login encrypted on your PC and puts the right one back when you switch. A saved login stays valid for about 28 days from the last time it was refreshed, so use each account at least once in that time. The window warns you when a saved login is within 7 days of expiring."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is it safe? Where are my logins stored?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Saved logins are encrypted with Windows DPAPI, so only your Windows user account on that PC can read them. They never leave your computer: CCSwitcherX has no server and no telemetry. Before every switch it backs up the current login, keeps a recovery journal in case of a crash, and rolls back if a file write fails."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does switching change my Claude Code settings, skills, memory or chat history?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Only the login is swapped: the claudeAiOauth entry in ~/.claude/.credentials.json and the oauthAccount entry in ~/.claude.json (plus one cached flag that Claude Code recreates by itself). Skills, CLAUDE.md, memory, MCP logins and chat history are shared by every account."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I see usage for each account?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The window and the status bar show the 5-hour session and 7-day weekly usage with reset times. The active account's numbers come from Claude Code itself. Other accounts are read live while their saved sign-in is still fresh (about 8 hours after you last used them), otherwise you see the last known numbers marked \"as of\"."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which platforms and versions does it support?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Windows 10 and 11 with Python 3.9 or newer (tested on Python 3.11). It works with the Claude Code command line and the Claude Code VS Code extension. macOS and Linux are not supported yet because the encryption uses Windows DPAPI."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is CCSwitcherX an official Anthropic tool?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. CCSwitcherX is independent and unofficial. Claude and Claude Code are trademarks of Anthropic. It only moves your own login between your own accounts on your own computer; check Anthropic's terms for your plan."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it work with Claude Pro, Max and Team accounts?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It is built for claude.ai subscription logins (Pro, Max and Team) and does not manage API keys. It has been tested with real Max and Pro accounts; Team accounts use the same login format."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I add an account?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Open Claude Accounts and click Add account, then sign in with the account in the browser tab that opens (choose Switch account on that page if it shows the wrong one) and give it a name. Your previous login is saved automatically first, and cancelling puts it back."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is CCSwitcherX different from claude-swap and CCSwitcher?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "They use the same basic technique: back up each account's login and swap it in. CCSwitcherX is Windows-first with a graphical window and a VS Code status bar, encrypts saved logins with Windows DPAPI, shows usage for each account and ships with a self-check. claude-swap is cross-platform with terminal tooling and automatic rotation, and CCSwitcher is a macOS menu-bar app."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it work with CCUsageX?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. CCUsageX reads your Claude Code chat history and Claude Code's own usage report, and both follow the active account, so its plan-limit card shows the account you switched to. Its cost and token totals combine all accounts, because chat history does not record which account was used."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What happens if I stop using CCSwitcherX?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nothing breaks. Claude Code keeps using whichever account was active last. Uninstall with scripts/uninstall.ps1; your saved logins are kept unless you ask to remove them."
+      }
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": "https://mhjoy99.github.io/CCSwitcherX/#website",
+  "name": "CCSwitcherX",
+  "url": "https://mhjoy99.github.io/CCSwitcherX/",
+  "inLanguage": "en",
+  "description": "Landing page for CCSwitcherX, a free, open-source Windows tool for switching Claude Code between your own accounts.",
+  "author": { "@id": "https://github.com/MHJoy99#person" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://mhjoy99.github.io/CCSwitcherX/" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": "https://github.com/MHJoy99#person",
+  "name": "MHJoy99",
+  "url": "https://github.com/MHJoy99",
+  "sameAs": ["https://github.com/MHJoy99"]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "Install CCSwitcherX",
+  "description": "Install CCSwitcherX on Windows and set up a Claude Code account switcher with a VS Code status bar.",
+  "totalTime": "PT5M",
+  "step": [
+    { "@type": "HowToStep", "position": 1, "name": "Clone the repository", "text": "Run git clone https://github.com/MHJoy99/CCSwitcherX to download the project.", "url": "https://mhjoy99.github.io/CCSwitcherX/#install" },
+    { "@type": "HowToStep", "position": 2, "name": "Open the folder", "text": "Run cd CCSwitcherX to enter the project folder.", "url": "https://mhjoy99.github.io/CCSwitcherX/#install" },
+    { "@type": "HowToStep", "position": 3, "name": "Run the installer", "text": "Run powershell -ExecutionPolicy Bypass -File scripts\\install.ps1. It copies the program to ~/.claude-accounts, makes the Start Menu shortcut, installs the VS Code extension and runs the self-check.", "url": "https://mhjoy99.github.io/CCSwitcherX/#install" }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="CCSwitcherX home"><img src="assets/logo.svg" width="30" height="30" alt="CCSwitcherX logo">CCSwitcherX</a>
+    <nav class="nav" aria-label="Main">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How it works</a>
+      <a href="demo/">Demo</a>
+      <a href="#install">Install</a>
+      <a href="#faq">FAQ</a>
+      <a class="gh" href="https://github.com/MHJoy99/CCSwitcherX">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top">
+  <div class="wrap">
+    <ul class="eyebrow" aria-label="Project facts">
+      <li>Windows</li>
+      <li>VS Code</li>
+      <li>MIT</li>
+      <li>Python 3.9+</li>
+    </ul>
+    <h1>Switch Claude Code between your own accounts in one click</h1>
+    <p class="lede">CCSwitcherX is a free, open-source Windows tool that keeps each of your Claude logins saved and swaps the right one in when you pick it. It works from a small window and a VS Code status bar, and it is unofficial and not affiliated with Anthropic.</p>
+    <div class="cta">
+      <a class="btn primary" href="#install">Install</a>
+      <a class="btn" href="demo/">Try the live demo</a>
+    </div>
+    <div class="hero-art">
+      <img src="assets/hero-banner.svg" width="1280" height="420" alt="CCSwitcherX account picker showing a personal Max account and a work Team account with their session and week usage" fetchpriority="high">
+    </div>
+  </div>
+</section>
+
+<section class="why" aria-labelledby="why-title">
+  <div class="narrow">
+    <h2 id="why-title">Why</h2>
+    <p>Claude Code signs in to one account at a time, so moving between a personal plan and a work Team plan normally means signing in again. CCSwitcherX backs up each login and puts the chosen one back in a fraction of a second. Skills, CLAUDE.md, memory, MCP logins and chat history stay shared by every account.</p>
+  </div>
+</section>
+
+<section class="alt" id="features" aria-labelledby="features-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="features-title">Features</h2>
+      <p>Four parts that do one job each: switching, usage, the VS Code status bar and the safety checks.</p>
+    </div>
+    <div class="grid g2">
+      <figure class="card">
+        <img src="assets/feature-switch.svg" width="480" height="300" alt="Account cards with a Switch button and a green IN USE pill" loading="lazy" decoding="async">
+        <figcaption>
+          <h3>Switch in one click</h3>
+          <p>Pick the account in the window or the status bar. The swap itself takes a fraction of a second.</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="assets/feature-usage.svg" width="480" height="300" alt="Session and week usage bars for each saved account with reset times" loading="lazy" decoding="async">
+        <figcaption>
+          <h3>Usage for every account</h3>
+          <p>The 5-hour Session and 7-day Week percentages, with reset times, for each saved login.</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="assets/feature-vscode.svg" width="480" height="300" alt="VS Code status bar showing the active Claude account and its usage" loading="lazy" decoding="async">
+        <figcaption>
+          <h3>Status bar and picker in VS Code</h3>
+          <p>The active account and its usage show in the status bar. Click it to choose another account.</p>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="assets/feature-safe.svg" width="480" height="300" alt="Shield-style panel listing encryption, backup and rollback" loading="lazy" decoding="async">
+        <figcaption>
+          <h3>Encrypted, backed up, self-checked</h3>
+          <p>Saved logins use Windows DPAPI. Every switch backs up the current login first, and a self-check verifies the setup.</p>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works" aria-labelledby="how-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="how-title">How it works</h2>
+      <p>A switch replaces two entries in Claude Code's login files.</p>
+    </div>
+    <div class="how">
+      <img src="assets/how-it-works.svg" width="960" height="440" alt="Diagram: saved logins feed a switch that swaps the login entries in the Claude Code files" loading="lazy" decoding="async">
+      <ol class="steps">
+        <li><strong>Add each account once.</strong> Add account runs Claude Code's own browser sign-in and saves the result under a name you choose.</li>
+        <li><strong>Saved logins are encrypted.</strong> Each login is stored with Windows DPAPI, so only your Windows user can read it.</li>
+        <li><strong>Switch swaps two entries.</strong> <code>claudeAiOauth</code> and <code>oauthAccount</code> are replaced while Claude Code's lock files are held. A real swap measured 21 to 27 ms.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="status" aria-labelledby="status-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="status-title">Status bar</h2>
+      <p>The VS Code status bar shows which account Claude Code is using, so you never have to guess.</p>
+    </div>
+    <figure class="figure">
+      <img src="assets/status-bar.svg" width="1200" height="320" alt="VS Code status bar reading Personal with 64 percent usage" loading="lazy" decoding="async">
+      <figcaption>The status bar shows the active account and its session usage. Click it to switch.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="usage" aria-labelledby="usage-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="usage-title">Usage at a glance</h2>
+      <p>Bars are green below 70%, amber from 70% to 89%, and red from 90%. A window that has already rolled over shows "reset".</p>
+    </div>
+    <figure class="figure">
+      <img src="assets/usage-bars.svg" width="960" height="360" alt="Usage bars for Personal and Team accounts with session and week percentages" loading="lazy" decoding="async">
+      <figcaption>The active account comes from Claude Code's own cache. Other accounts are read only while their saved sign-in is still valid.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="alt" id="cli" aria-labelledby="cli-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="cli-title">Command line</h2>
+      <p>The same engine runs from a terminal with <code>claude_accounts.py</code>: list, status, switch, usage, add, save, rename, remove, doctor and <code>--json</code>.</p>
+    </div>
+    <figure class="figure">
+      <img src="assets/cli-demo.svg" width="960" height="480" alt="Terminal session running list, switch Team, usage and doctor commands" loading="lazy" decoding="async">
+      <figcaption>Example output with fictional accounts.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="install" aria-labelledby="install-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="install-title">Install</h2>
+      <p>Three commands in PowerShell. The installer copies the program, adds the Start Menu shortcut, installs the VS Code extension and runs the self-check.</p>
+    </div>
+    <ol class="install-steps">
+      <li>
+        <p><strong>Clone the repository</strong></p>
+        <div class="cmd"><code><span class="p">$ </span>git clone https://github.com/MHJoy99/CCSwitcherX</code><button type="button" class="copy" data-copy="git clone https://github.com/MHJoy99/CCSwitcherX" aria-label="Copy the git clone command">Copy</button></div>
+      </li>
+      <li>
+        <p><strong>Open the folder</strong></p>
+        <div class="cmd"><code><span class="p">$ </span>cd CCSwitcherX</code><button type="button" class="copy" data-copy="cd CCSwitcherX" aria-label="Copy the cd command">Copy</button></div>
+      </li>
+      <li>
+        <p><strong>Run the installer</strong></p>
+        <div class="cmd"><code><span class="p">$ </span>powershell -ExecutionPolicy Bypass -File scripts\install.ps1</code><button type="button" class="copy" data-copy="powershell -ExecutionPolicy Bypass -File scripts\install.ps1" aria-label="Copy the installer command">Copy</button></div>
+      </li>
+    </ol>
+    <h3 style="margin-top:30px">Requirements</h3>
+    <ul class="reqs">
+      <li>Windows 10 or Windows 11</li>
+      <li>Python 3.9 or newer (tested on 3.11), standard library only, no pip packages</li>
+      <li>Claude Code, either the command line or the VS Code extension</li>
+      <li>Git to clone the repository (or the ZIP download from GitHub), and Windows PowerShell, which ships with Windows, to run the installer</li>
+    </ul>
+  </div>
+</section>
+
+<section class="alt" id="safety" aria-labelledby="safety-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="safety-title">Safety and privacy</h2>
+      <p>The tool moves only the login, and only on your own computer.</p>
+    </div>
+    <ul class="priv">
+      <li><strong>Encrypted logins</strong><span>Saved logins are encrypted with Windows DPAPI and can be read only by the current Windows user.</span></li>
+      <li><strong>No server, no telemetry</strong><span>The only network calls are Claude Code's own browser sign-in and a read-only usage request made with your own token.</span></li>
+      <li><strong>Backup and rollback</strong><span>Each switch backs up the current login, keeps a recovery journal, and rolls back if a file write fails.</span></li>
+      <li><strong>Only the login changes</strong><span>Skills, CLAUDE.md, memory, MCP logins and chat history are shared and untouched.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section id="compare" aria-labelledby="compare-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="compare-title">How it compares</h2>
+      <p>Other tools use the same basic technique. They differ in platform and interface.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th scope="col">Tool</th><th scope="col">Platform</th><th scope="col">Interface</th></tr>
+        </thead>
+        <tbody>
+          <tr class="us"><th scope="row">CCSwitcherX</th><td>Windows 10 and 11</td><td>Window and VS Code status bar</td></tr>
+          <tr><th scope="row"><a href="https://github.com/realiti4/claude-swap">claude-swap</a></th><td>macOS, Linux, Windows</td><td>Terminal, TUI, macOS menu bar</td></tr>
+          <tr><th scope="row"><a href="https://github.com/XueshiQiao/CCSwitcher">CCSwitcher</a></th><td>macOS</td><td>Menu-bar app</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="compare-note">Same basic technique, different needs.</p>
+  </div>
+</section>
+
+<section class="alt" id="faq" aria-labelledby="faq-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="faq-title">FAQ</h2>
+      <p>Short answers to the questions people ask most.</p>
+    </div>
+    <div class="faq-list">
+      <h3>What is CCSwitcherX?</h3>
+      <p>CCSwitcherX is a free, open-source (MIT) Windows tool that switches the Claude Code login between your own saved accounts, for example a personal Max plan and a work Team plan, in one click. It has a small window and a VS Code status-bar extension, and it needs nothing beyond Python 3.9 or newer.</p>
+      <h3>How do I switch between a personal and a Team Claude account in VS Code?</h3>
+      <p>Install CCSwitcherX, sign in to each account once with Add account, then click the account name in the VS Code status bar and pick the other account. The swap takes a fraction of a second and VS Code does not need a restart. Open Claude Code chats pick up the new account on their next message; if one does not, start a new chat.</p>
+      <h3>Do I have to log in again every time I switch?</h3>
+      <p>No. You sign in once per account. CCSwitcherX keeps each login encrypted on your PC and puts the right one back when you switch. A saved login stays valid for about 28 days from the last time it was refreshed, so use each account at least once in that time. The window warns you when a saved login is within 7 days of expiring.</p>
+      <h3>Is it safe? Where are my logins stored?</h3>
+      <p>Saved logins are encrypted with Windows DPAPI, so only your Windows user account on that PC can read them. They never leave your computer: CCSwitcherX has no server and no telemetry. Before every switch it backs up the current login, keeps a recovery journal in case of a crash, and rolls back if a file write fails.</p>
+      <h3>Does switching change my Claude Code settings, skills, memory or chat history?</h3>
+      <p>No. Only the login is swapped: the claudeAiOauth entry in ~/.claude/.credentials.json and the oauthAccount entry in ~/.claude.json (plus one cached flag that Claude Code recreates by itself). Skills, CLAUDE.md, memory, MCP logins and chat history are shared by every account.</p>
+      <h3>Can I see usage for each account?</h3>
+      <p>Yes. The window and the status bar show the 5-hour session and 7-day weekly usage with reset times. The active account's numbers come from Claude Code itself. Other accounts are read live while their saved sign-in is still fresh (about 8 hours after you last used them), otherwise you see the last known numbers marked "as of".</p>
+      <h3>Which platforms and versions does it support?</h3>
+      <p>Windows 10 and 11 with Python 3.9 or newer (tested on Python 3.11). It works with the Claude Code command line and the Claude Code VS Code extension. macOS and Linux are not supported yet because the encryption uses Windows DPAPI.</p>
+      <h3>Is CCSwitcherX an official Anthropic tool?</h3>
+      <p>No. CCSwitcherX is independent and unofficial. Claude and Claude Code are trademarks of Anthropic. It only moves your own login between your own accounts on your own computer; check Anthropic's terms for your plan.</p>
+      <h3>Does it work with Claude Pro, Max and Team accounts?</h3>
+      <p>It is built for claude.ai subscription logins (Pro, Max and Team) and does not manage API keys. It has been tested with real Max and Pro accounts; Team accounts use the same login format.</p>
+      <h3>How do I add an account?</h3>
+      <p>Open Claude Accounts and click Add account, then sign in with the account in the browser tab that opens (choose Switch account on that page if it shows the wrong one) and give it a name. Your previous login is saved automatically first, and cancelling puts it back.</p>
+      <h3>How is CCSwitcherX different from claude-swap and CCSwitcher?</h3>
+      <p>They use the same basic technique: back up each account's login and swap it in. CCSwitcherX is Windows-first with a graphical window and a VS Code status bar, encrypts saved logins with Windows DPAPI, shows usage for each account and ships with a self-check. claude-swap is cross-platform with terminal tooling and automatic rotation, and CCSwitcher is a macOS menu-bar app.</p>
+      <h3>Does it work with CCUsageX?</h3>
+      <p>Yes. CCUsageX reads your Claude Code chat history and Claude Code's own usage report, and both follow the active account, so its plan-limit card shows the account you switched to. Its cost and token totals combine all accounts, because chat history does not record which account was used.</p>
+      <h3>What happens if I stop using CCSwitcherX?</h3>
+      <p>Nothing breaks. Claude Code keeps using whichever account was active last. Uninstall with scripts/uninstall.ps1; your saved logins are kept unless you ask to remove them.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <p><strong>CCSwitcherX</strong> is released under the MIT license.</p>
+      <p>Unofficial: not affiliated with Anthropic. Claude and Claude Code are trademarks of Anthropic.</p>
+    </div>
+    <ul>
+      <li><a href="https://github.com/MHJoy99/CCSwitcherX">GitHub</a></li>
+      <li><a href="https://mhjoy99.github.io/CCUsageX/">CCUsageX</a></li>
+      <li><a href="https://github.com/MHJoy99/CCSwitcherX/issues">Issues</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+(function () {
+  function copyText(text, btn, source) {
+    function done(ok) {
+      btn.textContent = ok ? 'Copied' : 'Press Ctrl+C';
+      setTimeout(function () { btn.textContent = 'Copy'; }, 1600);
+    }
+    function selectFallback() {
+      try {
+        var range = document.createRange();
+        range.selectNodeContents(source);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } catch (e) { /* selection is a convenience only */ }
+      done(false);
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, selectFallback);
+    } else {
+      selectFallback();
+    }
+  }
+  document.querySelectorAll('button.copy[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var source = btn.parentNode.querySelector('code') || btn;
+      copyText(btn.getAttribute('data-copy'), btn, source);
+    });
+  });
+})();
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "a2f7f3d589ae4c8688a646d54918b0e7"}'></script>
+</body>
+</html>

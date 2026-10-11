@@ -1,0 +1,16 @@
+/* TEAM */
+Author: MHJoy99
+Site: https://github.com/MHJoy99
+Project: https://github.com/MHJoy99/CCSwitcherX
+
+/* SITE */
+Last update: 2026-10-11
+Standards: HTML5, CSS3, JSON-LD (schema.org), RFC 9116 (security.txt)
+Components: plain HTML, CSS and JavaScript. No frameworks, no web fonts, no external requests.
+Software: Python standard library (tkinter), PowerShell, VS Code extension API.
+
+/* NOTES */
+CCSwitcherX is unofficial and is not affiliated with Anthropic.
+Claude and Claude Code are trademarks of Anthropic.
+Prior art: claude-swap (cross-platform, terminal tooling) and CCSwitcher (macOS menu-bar app).
+License: MIT.

@@ -1,0 +1,184 @@
+CCSwitcherX - full plain-text description for language models
+Last updated: 2026-10-11
+Website: https://mhjoy99.github.io/CCSwitcherX/
+Demo (fictional data): https://mhjoy99.github.io/CCSwitcherX/demo/
+Repository: https://github.com/MHJoy99/CCSwitcherX
+Author: MHJoy99 (https://github.com/MHJoy99)
+
+WHAT IT IS
+
+CCSwitcherX is a free, open-source (MIT) Windows tool that switches the Claude Code login between your own saved accounts, for example a personal Max plan and a work Team plan, in one click. Its one-line summary: "Switch Claude Code between your own accounts in one click."
+
+CCSwitcherX is unofficial and is not affiliated with Anthropic. "Claude" and "Claude Code" are trademarks of Anthropic.
+
+It has three parts:
+1. The "Claude Accounts" window. It is built with tkinter and follows the Windows dark or light setting. Find it from the Start Menu or Windows search. It shows one card per account, with usage bars, a "Switch" button, a "Refresh usage" button and an "Add account" button.
+2. A VS Code status-bar extension. It shows the active account and its usage, for example "Personal · 64%". Click it to pick another account.
+3. A command-line tool, claude_accounts.py.
+
+WHO IT IS FOR
+
+People who use Claude Code on Windows with more than one claude.ai subscription login, for example a personal plan and a work Team plan, and who want to change between them without signing out and signing in again each time.
+
+It is built for claude.ai subscription logins (Pro, Max and Team). It does not manage API keys.
+
+PLATFORM AND REQUIREMENTS
+
+- Windows 10 or Windows 11.
+- Python 3.9 or newer. Tested on Python 3.11.
+- Python standard library only. No pip packages.
+- Works with the Claude Code command line and the Claude Code VS Code extension.
+- The claude command must be on PATH. The doctor command checks this.
+- macOS and Linux are not supported yet, because saved logins are encrypted with Windows DPAPI.
+
+HOW IT WORKS
+
+A switch replaces two entries in Claude Code's login files:
+- the claudeAiOauth entry in ~/.claude/.credentials.json
+- the oauthAccount entry in ~/.claude.json
+
+While it does this, it holds Claude Code's own lock files: .oauth_refresh.lock, ~/.claude.lock and ~/.claude.json.lock. A real swap measured 21-27 ms.
+
+Skills, CLAUDE.md, memory, MCP logins and chat history are shared by every account and are not touched.
+
+Add account runs Claude Code's own "claude auth login" in the browser, then saves the result under a name you choose.
+
+Open Claude Code chats pick up the new account on their next message. If one does not, start a new chat.
+
+SAFETY MODEL
+
+- Saved logins are encrypted with Windows DPAPI. Only the current Windows user on that PC can read them.
+- Saved logins are stored in ~/.claude-accounts/profiles.
+- Before each switch, the current login is backed up. The last 10 backups are kept.
+- A journal finishes an interrupted switch.
+- A failed write rolls back.
+- An expired saved login is refused with a clear message.
+- Cancelling "Add account" restores the previous login.
+- It never runs a logout first.
+- No server and no telemetry. The network is used only for Claude Code's own browser sign-in and for the read-only usage request described below.
+- The doctor self-check confirms that login files are found, encryption works, the claude command is on PATH, and Claude Code still uses the lock names the tool relies on. The VS Code extension runs the check quietly at startup and warns if something changed.
+
+USAGE DISPLAY RULES
+
+- The window and status bar show the 5-hour Session percentage and the 7-day Week percentage, with reset times.
+- Active account: the numbers come from Claude Code's own cache. There is no network request.
+- Other accounts: a read-only request to api.anthropic.com/api/oauth/usage is sent only while that account's saved access token is valid (about 8 hours). The tool never refreshes a saved login just to read usage.
+- Otherwise the last known numbers are shown and labelled with their age, for example "as of 3 h ago".
+- Bar colours: green below 70%, amber from 70% to 89%, red from 90%.
+- A window whose reset time has passed shows "reset".
+- A saved login lasts about 28 days from its last refresh. The window warns when one has under 7 days left.
+
+INSTALL
+
+1. git clone https://github.com/MHJoy99/CCSwitcherX
+2. powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+
+The installer copies the program into ~/.claude-accounts, makes the Start Menu shortcut, installs the VS Code extension and runs the self-check.
+
+Tests: powershell -ExecutionPolicy Bypass -File scripts\test.ps1 runs 32 engine tests and 16 extension tests. They use fake accounts and a mocked VS Code API.
+
+Uninstall: scripts/uninstall.ps1. Your saved logins are kept unless you ask to remove them.
+
+CLI REFERENCE
+
+Run from the repository folder: python claude_accounts.py <command>
+
+Commands: list, status, switch NAME, usage, add, save, rename, remove, doctor. The --json flag gives machine-readable output.
+
+list
+  * Personal         alex@example.com                   Max 5x
+    Team             alex@acme.example                  Team · Acme Inc
+(* marks the active account. Fictional data.)
+
+switch NAME
+  python claude_accounts.py switch Team
+  Now using "Team" (verified).
+
+usage
+  python claude_accounts.py usage
+    Personal         Session 64% · Week 34% (Session resets in 3h 6m · Week resets Thu 5:00 PM)
+  * Team             Session 11% · Week 27% (Session resets in 4h 46m · Week resets Sat 4:00 PM)
+
+status
+  python claude_accounts.py status
+  Team: alex@acme.example · Team · Acme Inc
+
+doctor
+  python claude_accounts.py doctor
+  ok   Login file found: C:\Users\alex\.claude\.credentials.json
+  ok   Account record found: C:\Users\alex\.claude.json
+  ok   Saved logins encrypted: Windows DPAPI
+  ok   claude command found: C:\Users\alex\AppData\Roaming\npm\claude.CMD
+  ok   Saved accounts: 2 saved
+  ok   Claude Code's lock names unchanged: anthropic.claude-code-2.1.296-win32-x64
+
+add
+  Runs "claude auth login" in the browser, then saves the result under a name you choose.
+
+save, rename, remove
+  Manage saved accounts. Use "rename" to change a saved account's name and "remove" to take an account off the list.
+
+LIMITATIONS
+
+- Windows only. macOS and Linux are not supported yet.
+- Requires Python 3.9 or newer.
+- A saved login lasts about 28 days from its last refresh. Use each account at least once in that time.
+- Usage for an account that you have not used recently is its last known value, marked "as of". It is not live.
+- Tested with real Max and Pro accounts. Team accounts use the same login format.
+- It does not manage API keys.
+- It does not change Claude Code settings, skills, memory or chat history.
+
+FREQUENTLY ASKED QUESTIONS
+
+Q: What is CCSwitcherX?
+A: CCSwitcherX is a free, open-source (MIT) Windows tool that switches the Claude Code login between your own saved accounts, for example a personal Max plan and a work Team plan, in one click. It has a small window and a VS Code status-bar extension, and it needs nothing beyond Python 3.9 or newer.
+
+Q: How do I switch between a personal and a Team Claude account in VS Code?
+A: Install CCSwitcherX, sign in to each account once with Add account, then click the account name in the VS Code status bar and pick the other account. The swap takes a fraction of a second and VS Code does not need a restart. Open Claude Code chats pick up the new account on their next message; if one does not, start a new chat.
+
+Q: Do I have to log in again every time I switch?
+A: No. You sign in once per account. CCSwitcherX keeps each login encrypted on your PC and puts the right one back when you switch. A saved login stays valid for about 28 days from the last time it was refreshed, so use each account at least once in that time. The window warns you when a saved login is within 7 days of expiring.
+
+Q: Is it safe? Where are my logins stored?
+A: Saved logins are encrypted with Windows DPAPI, so only your Windows user account on that PC can read them. They never leave your computer: CCSwitcherX has no server and no telemetry. Before every switch it backs up the current login, keeps a recovery journal in case of a crash, and rolls back if a file write fails.
+
+Q: Does switching change my Claude Code settings, skills, memory or chat history?
+A: No. Only the login is swapped: the claudeAiOauth entry in ~/.claude/.credentials.json and the oauthAccount entry in ~/.claude.json (plus one cached flag that Claude Code recreates by itself). Skills, CLAUDE.md, memory, MCP logins and chat history are shared by every account.
+
+Q: Can I see usage for each account?
+A: Yes. The window and the status bar show the 5-hour session and 7-day weekly usage with reset times. The active account's numbers come from Claude Code itself. Other accounts are read live while their saved sign-in is still fresh (about 8 hours after you last used them), otherwise you see the last known numbers marked "as of".
+
+Q: Which platforms and versions does it support?
+A: Windows 10 and 11 with Python 3.9 or newer (tested on Python 3.11). It works with the Claude Code command line and the Claude Code VS Code extension. macOS and Linux are not supported yet because the encryption uses Windows DPAPI.
+
+Q: Is CCSwitcherX an official Anthropic tool?
+A: No. CCSwitcherX is independent and unofficial. Claude and Claude Code are trademarks of Anthropic. It only moves your own login between your own accounts on your own computer; check Anthropic's terms for your plan.
+
+Q: Does it work with Claude Pro, Max and Team accounts?
+A: It is built for claude.ai subscription logins (Pro, Max and Team) and does not manage API keys. It has been tested with real Max and Pro accounts; Team accounts use the same login format.
+
+Q: How do I add an account?
+A: Open Claude Accounts and click Add account, then sign in with the account in the browser tab that opens (choose Switch account on that page if it shows the wrong one) and give it a name. Your previous login is saved automatically first, and cancelling puts it back.
+
+Q: How is CCSwitcherX different from claude-swap and CCSwitcher?
+A: They use the same basic technique: back up each account's login and swap it in. CCSwitcherX is Windows-first with a graphical window and a VS Code status bar, encrypts saved logins with Windows DPAPI, shows usage for each account and ships with a self-check. claude-swap is cross-platform with terminal tooling and automatic rotation, and CCSwitcher is a macOS menu-bar app.
+
+Q: Does it work with CCUsageX?
+A: Yes. CCUsageX reads your Claude Code chat history and Claude Code's own usage report, and both follow the active account, so its plan-limit card shows the account you switched to. Its cost and token totals combine all accounts, because chat history does not record which account was used.
+
+Q: What happens if I stop using CCSwitcherX?
+A: Nothing breaks. Claude Code keeps using whichever account was active last. Uninstall with scripts/uninstall.ps1; your saved logins are kept unless you ask to remove them.
+
+RELATION TO OTHER TOOLS
+
+- claude-swap: cross-platform, with terminal tooling and automatic rotation. It uses the same basic technique.
+- CCSwitcher: a macOS menu-bar app. It uses the same basic technique.
+- CCUsageX (https://mhjoy99.github.io/CCUsageX/): a Claude Code usage dashboard by the same author. It reads chat history and Claude Code's usage report. Both follow the active account.
+
+LICENSE
+
+MIT. See the LICENSE file in the repository. Author: MHJoy99.
+
+TRADEMARK DISCLAIMER
+
+Claude and Claude Code are trademarks of Anthropic. CCSwitcherX is independent and unofficial, and it is not affiliated with Anthropic. Check Anthropic's terms for your plan.
