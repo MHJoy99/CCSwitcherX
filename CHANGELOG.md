@@ -2,6 +2,11 @@
 
 All notable changes to CCSwitcherX. Dates are in ISO format.
 
+## Unreleased
+
+- **Reset times read the right minute.** Anthropic reports resets a fraction of a second before the hour, so a reset at
+  1:00 AM showed as "12:59 AM". Times are now rounded to the nearest minute.
+
 ## 1.1.0 (2026-10-11)
 
 - **Usage for every account.** The window, the VS Code status bar and `claude_accounts.py usage` show the 5-hour

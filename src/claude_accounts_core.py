@@ -635,7 +635,8 @@ def fmt_ago(sec):
 
 
 def fmt_clock(epoch):
-    t = datetime.fromtimestamp(epoch)
+    # Anthropic sends reset times like 18:59:59.5; round to the nearest minute so that reads 7:00, not 6:59
+    t = datetime.fromtimestamp(round(epoch / 60) * 60)
     return t.strftime("%a ") + t.strftime("%I:%M %p").lstrip("0")
 
 

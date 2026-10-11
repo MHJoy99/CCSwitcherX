@@ -349,6 +349,12 @@ class CoreTests(unittest.TestCase):
         self.assertIn("Session resets in", view["resets"])
         self.assertFalse(view["stale"])
 
+    def test_reset_clock_rounds_to_the_nearest_minute(self):
+        base = time.mktime((2026, 10, 15, 17, 0, 0, 0, 0, -1))
+        for offset in (-0.5, -0.2, 0, 0.3):         # Anthropic's reset times land a hair either side of the hour
+            self.assertIn("5:00 PM", core.fmt_clock(base + offset))
+        self.assertIn("4:59 PM", core.fmt_clock(base - 60))
+
     def test_state_alone_adopts_the_cache_and_keeps_it_when_the_account_goes_idle(self):
         personal = core.save_profile(core.read_live())
         team = core.save_profile({"claudeAiOauth": oauth("t1"), "oauthAccount": acct(2, "claude_team")})
