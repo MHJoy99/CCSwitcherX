@@ -60,7 +60,7 @@ All of these are under the app folder `~/.claude-accounts` (`STORE`), or `CA_STO
 
 | Path | Purpose | Encrypted |
 |---|---|---|
-| `~/.claude-accounts/claude_accounts.py`, `claude_accounts_core.py`, `claude_accounts_providers.py`, `claude_accounts_gui.py`, `icon.ico`, `icon.png` | Program files, copied by `scripts/install.ps1` | No |
+| `~/.claude-accounts/claude_accounts.py`, `claude_accounts_core.py`, `claude_accounts_providers.py`, `claude_accounts_transcripts.py`, `claude_accounts_gui.py`, `icon.ico`, `icon.png` | Program files, copied by `scripts/install.ps1` | No |
 | `~/.claude-accounts/providers/<id>.dat` | One saved provider: `name`, `baseUrl`, `apiKey`, `models` (`opus`, `sonnet`, `haiku`, `subagent`), `createdAt`, `updatedAt` (`add_provider`) | Yes, DPAPI |
 | `~/.claude-accounts/route.json` | What a provider changed in `settings.json`: the previous value of each managed key and what was written. Holds no secrets. Present only while a provider is in use. | No |
 | `~/.claude-accounts/settings-backups/<stamp>.dat` | Copy of `settings.json` taken before every provider change. The newest 10 are kept (`_backup_settings`). | Yes, DPAPI |
@@ -387,6 +387,8 @@ from `settings.json` itself (`current_route`), not from our own bookkeeping, so 
 **Timing.** Claude Code watches its settings and applies edits to a running session; measured on 2.1.296 (2026-10-12) a change is picked
 up about 1.5 s after the file changes (0.7 s was too early once), so the apps wait `SETTLE_SECONDS` = 2 s before saying "ready". The next
 message uses the new model; an open chat keeps its history, and the new model re-reads it uncached.
+
+**Chats written by a provider's model.** A gateway that serves another model writes blocks into Claude Code's chat files (`projects/**/*.jsonl`) that Anthropic's API refuses when the same chat continues on a Claude account: a `signature` key on `tool_use` blocks (HTTP 400 "tool_use.signature: Extra inputs are not permitted") and thinking blocks with an empty or foreign signature ("Invalid signature in thinking block"). Claude Code resends the whole history with every message, so one such block breaks the chat for good. `claude_accounts_transcripts.py` repairs this every time Claude Code is switched to an account or a provider is turned off (`deactivate`, also when no provider was active): for assistant messages whose model is not `claude-*`, thinking / redacted_thinking blocks are removed and keys Anthropic does not accept are dropped from `tool_use` and `text` blocks (a line left empty is dropped and its children are re-linked). Messages written by a Claude model are never changed, the first original of each file is kept in `transcript-backups/`, a file that Claude Code is appending to is re-read instead of overwritten, and a repair problem never blocks a switch. The scan of about 600 MB of chats takes about 1 s. Covered by `tests/test_transcripts.py`. An already open chat holds its history in memory: if it still reports the error right after a switch, reopen that chat.
 
 **Connection test.** `check_model` sends a tool request and then a second request that carries the first answer back (thinking blocks
 included), the way Claude Code does. A gateway that mishandles replayed thinking fails the second step: that is exactly how a missing

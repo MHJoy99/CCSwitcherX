@@ -4,6 +4,7 @@ All notable changes to CCSwitcherX. Dates are in ISO format.
 
 ## 1.2.0 (2026-10-12)
 
+- **Switching back to a Claude account keeps old chats working.** Chats that ran on a provider's model carried fields Anthropic's API rejects (`tool_use.signature: Extra inputs are not permitted`, `Invalid signature in thinking block`). Every switch to an account (and `provider off`) now repairs those chats first: only blocks written by non-Claude models are touched, originals are kept in `transcript-backups/`, and a repair problem never blocks the switch.
 - **Providers: use other models, one click.** Save a gateway (address, API key, which model answers for Opus, Sonnet, Haiku
   and subagents) and switch Claude Code to it from the window, the VS Code status bar or `provider use NAME`; switch back by
   picking an account. A switch reaches Claude Code from its next message (about two seconds), with no restart.

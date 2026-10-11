@@ -280,8 +280,24 @@ def activate(pid):
     return {"name": p["name"], "settleSeconds": SETTLE_SECONDS}
 
 
+def repair_chats():
+    """Make old chats that a provider touched usable on a Claude account again. Never raises."""
+    try:
+        import claude_accounts_transcripts as transcripts
+        return transcripts.repair_all()
+    except Exception as exc:   # a repair problem must never block a switch
+        return {"files": 0, "blocks": 0, "errors": [str(exc)]}
+
+
 def deactivate():
-    """Go back to the Claude account route. Returns the name of the provider that was in use, or None."""
+    """Go back to the Claude account route. Returns the name of the provider that was in use, or None.
+    Old chats are repaired too, so the ones that ran on the provider keep working on the account."""
+    left = _deactivate_settings()
+    repair_chats()
+    return left
+
+
+def _deactivate_settings():
     with core._dir_lock(ROUTE_LOCK, 30.0):
         obj, text = _read_settings()
         route = current_route(obj)

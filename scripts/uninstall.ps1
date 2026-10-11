@@ -12,7 +12,7 @@ $lnk = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Claude Acco
 Remove-Item $lnk -Force -ErrorAction SilentlyContinue
 $code = Get-Command code -ErrorAction SilentlyContinue
 if ($code) { & $code.Source --uninstall-extension local.claude-accounts 2>$null }
-foreach ($f in 'claude_accounts.py', 'claude_accounts_core.py', 'claude_accounts_gui.py', 'icon.ico', 'icon.png') {
+foreach ($f in 'claude_accounts.py', 'claude_accounts_core.py', 'claude_accounts_providers.py', 'claude_accounts_transcripts.py', 'claude_accounts_gui.py', 'icon.ico', 'icon.png') {
   Remove-Item (Join-Path $AppDir $f) -Force -ErrorAction SilentlyContinue
 }
 if ($RemoveSavedLogins) {
