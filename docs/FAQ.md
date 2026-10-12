@@ -24,7 +24,7 @@ No. Only the login is swapped: the claudeAiOauth entry in ~/.claude/.credentials
 
 ## Can I see usage for each account?
 
-Yes. The window and the status bar show the 5-hour session and 7-day weekly usage with reset times. The active account's numbers come from Claude Code itself. Other accounts are read live while their saved sign-in is still fresh (about 8 hours after you last used them), otherwise you see the last known numbers marked "as of".
+Yes. The window and the status bar show the 5-hour session and 7-day weekly usage with reset times. The active account's numbers come from Claude Code itself. Accounts not in use are read live too: when a saved account's short-lived access token has expired, the app renews it exactly like Claude Code does and saves the new tokens back into that saved account. The account in use is left to Claude Code. If the server refuses a saved sign-in, the card says to sign in again.
 
 ## Which platforms and versions does it support?
 
@@ -60,7 +60,7 @@ Each saved login is one file in `~/.claude-accounts/profiles`, named by a 12-cha
 
 ## What does Refresh usage do?
 
-It updates the usage numbers in the window and in the status bar. For the active account it reads Claude Code's own cached numbers if they are less than 10 minutes old, and makes no network call. For each other account it makes one read-only request to `api.anthropic.com`, and only while that account's saved access token is still valid. It never refreshes a saved token to do this. Normal refreshes wait at least 3 minutes per account; the Refresh usage button skips that wait but still respects the 10-minute backoff after an error. Results go to `usage.json`, which holds percentages and times, not tokens. See `refresh_usage` in `src/claude_accounts_core.py`.
+It updates the usage numbers in the window and in the status bar. For the active account it reads Claude Code's own cached numbers if they are less than 10 minutes old, and makes no network call. For each other account it makes one read-only request to `api.anthropic.com`. If that account's saved access token has expired, it first renews the token the way Claude Code does and saves the new tokens back into that saved account; the account in use is left to Claude Code. If the server refuses the saved sign-in, the card says to sign in again and the app waits 6 hours before asking again. Normal refreshes wait at least 3 minutes per account; the Refresh usage button skips that wait but still respects the 10-minute backoff after an error. Results go to `usage.json`, which holds percentages and times, not tokens. See `refresh_usage` in `src/claude_accounts_core.py`.
 
 ## Why does a card say "Sign-in expired" and what should I do?
 

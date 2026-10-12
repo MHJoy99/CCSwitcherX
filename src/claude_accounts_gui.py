@@ -1,9 +1,11 @@
 """Claude Accounts window (tkinter). Started by claude_accounts.py with no arguments."""
 import ctypes
+import math
 import queue
 import threading
 import time
 import tkinter as tk
+from datetime import datetime
 from tkinter import font as tkfont
 from tkinter import messagebox
 
@@ -11,14 +13,28 @@ import claude_accounts_core as core
 import claude_accounts_providers as providers
 
 # --------------------------------------------------------------------------- theme
+def _rgb(h):
+    return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
+
+
+def mix(a, b, t):
+    """Colour a moved fraction t of the way toward colour b ("#rrggbb" in, "#rrggbb" out)."""
+    return "#%02x%02x%02x" % tuple(int(round(x + (y - x) * t)) for x, y in zip(_rgb(a), _rgb(b)))
+
+
 LIGHT = dict(bg="#f5f4ee", card="#ffffff", card_hover="#faf9f5", border="#e0ddd2", text="#1f1e1d", muted="#6b6a65",
              accent="#c96442", accent_hover="#b5573a", accent_text="#ffffff", btn="#efece2", btn_hover="#e5e1d4",
              good="#2f8f5b", good_bg="#e3f3ea", warn="#a8741a", bad="#c0392b", banner="#fbeee6", team="#4f6fc4",
-             provider="#6a52b8")
+             provider="#6a52b8", track="#dedacb", row_hover="#ffffff")
 DARK = dict(bg="#1f1e1d", card="#2a2927", card_hover="#302f2c", border="#3b3936", text="#f0eee6", muted="#a3a099",
             accent="#d97757", accent_hover="#e48a6c", accent_text="#ffffff", btn="#3a3835", btn_hover="#46443f",
             good="#5bbf8a", good_bg="#23382d", warn="#e0a84b", bad="#e5726b", banner="#3a2a22", team="#6c8be0",
-            provider="#7d68c9")
+            provider="#7d68c9", track="#4c4944", row_hover="#2d2c29")
+for _p, _t in ((LIGHT, 0.10), (DARK, 0.15)):   # derived: accent-tinted hero surface, hairlines, chips
+    _p["hero"] = mix(_p["card"], _p["accent"], _t)
+    _p["hero_edge"] = mix(_p["border"], _p["accent"], 0.55)
+    _p["hair"] = mix(_p["border"], _p["bg"], 0.45)
+    _p["chip"] = mix(_p["btn"], _p["card"], 0.25)
 FONT = "Segoe UI"
 
 
@@ -41,6 +57,7 @@ def px(n):
 
 class Btn(tk.Label):
     """Flat button built from a label so it can follow the theme."""
+    on_paint = None   # optional callback(bg): lets a rounded wrapper (rbtn) repaint its pill
 
     def __init__(self, master, text, command, kind="secondary", size=10, padx=16, pady=7, bg_parent=None):
         self.kind, self.command, self.enabled = kind, command, True
@@ -56,6 +73,8 @@ class Btn(tk.Label):
         p = PAL
         if self.kind == "primary":
             bg, fg = (p["accent_hover"] if hover else p["accent"]), p["accent_text"]
+        elif self.kind == "soft":
+            bg, fg = (p["btn_hover"] if hover else p["btn"]), p["accent"]
         elif self.kind == "ghost":
             bg, fg = (p["btn"] if hover else (self._parent_bg or p["card"])), p["muted"]
         else:
@@ -63,6 +82,8 @@ class Btn(tk.Label):
         if not self.enabled:
             fg = p["muted"]
         self.configure(bg=bg, fg=fg, cursor="hand2" if self.enabled else "arrow")
+        if self.on_paint:
+            self.on_paint(bg)
 
     def set_enabled(self, on):
         self.enabled = on
@@ -163,9 +184,178 @@ def result_line(row):
 
 
 def round_rect(canvas, x1, y1, x2, y2, r, **kw):
-    pts = [x1 + r, y1, x2 - r, y1, x2, y1, x2, y1 + r, x2, y2 - r, x2, y2, x2 - r, y2, x1 + r, y2, x1, y2, x1, y2 - r,
-           x1, y1 + r, x1, y1]
-    return canvas.create_polygon(pts, smooth=True, **kw)
+    """Rounded rectangle as a smooth polygon: true circular corners (sampled arcs) plus midpoints on the straight
+    edges so the spline keeps them flat. Tk canvases have no anti-aliasing; this is the smoothest pure-tk shape."""
+    r = max(0, min(r, (x2 - x1) / 2, (y2 - y1) / 2))
+    if r < 2:
+        return canvas.create_polygon(x1, y1, x2, y1, x2, y2, x1, y2, **kw)
+    steps = max(3, int(r // 2))
+    pts = []
+    for cx, cy, a0 in ((x2 - r, y1 + r, -90), (x2 - r, y2 - r, 0), (x1 + r, y2 - r, 90), (x1 + r, y1 + r, 180)):
+        for i in range(steps + 1):
+            ang = math.radians(a0 + 90 * i / steps)
+            pts += [cx + r * math.cos(ang), cy + r * math.sin(ang)]
+    return canvas.create_polygon(pts, smooth=True, splinesteps=4, **kw)
+
+
+# --------------------------------------------------------------------------- drawing helpers
+def walk_widgets(w):
+    for child in w.winfo_children():
+        yield child
+        yield from walk_widgets(child)
+
+
+def retone(root, old, new):
+    """Swap one surface colour for another on every descendant (used for the hover tint)."""
+    for w in walk_widgets(root):
+        if isinstance(w, Btn):
+            if w._parent_bg == old:
+                w._parent_bg = new
+            w._paint(False)
+            continue
+        try:
+            if w.cget("bg") == old:
+                w.configure(bg=new)
+            if isinstance(w, tk.Canvas):
+                for item in w.find_all():
+                    if w.type(item) in ("polygon", "oval") and w.itemcget(item, "fill") == old:
+                        w.itemconfigure(item, fill=new)
+        except tk.TclError:
+            pass
+
+
+class Surface(tk.Frame):
+    """A smooth rounded panel. `body` is the frame to put content in; the panel redraws itself to fit it."""
+
+    def __init__(self, master, fill, hover=None, radius=14, outline=None, padx=14, pady=12, page=None):
+        page = page or PAL["bg"]
+        super().__init__(master, bg=page)
+        self.fill, self.hover_fill, self.cur, self.outline = fill, hover, fill, outline
+        self.radius, self.hovering = px(radius), False
+        self.back = tk.Canvas(self, bg=page, highlightthickness=0, bd=0)
+        self.back.place(x=0, y=0, relwidth=1, relheight=1)
+        self.body = tk.Frame(self, bg=fill)
+        self.body.pack(fill="x", padx=px(padx), pady=px(pady))
+        self.bind("<Configure>", self.draw)
+
+    def draw(self, _event=None):
+        w, h = self.winfo_width(), self.winfo_height()
+        if w < 6 or h < 6:
+            return
+        self.back.delete("all")
+        round_rect(self.back, 1, 1, w - 2, h - 2, min(self.radius, h // 2, w // 2), fill=self.cur,
+                   outline=self.outline or "", width=1)
+
+    def set_fill(self, color):
+        old, self.cur = self.cur, color
+        self.body.configure(bg=color)
+        retone(self.body, old, color)
+        self.draw()
+
+    def arm(self):
+        """Whole-panel hover feedback: enter/leave on every child, decided by where the pointer really is."""
+        if not self.hover_fill:
+            return
+        for w in (self, *walk_widgets(self)):
+            w.bind("<Enter>", lambda e: self.hover(True), add="+")
+            w.bind("<Leave>", lambda e: self.after(40, self._check), add="+")
+
+    def _check(self):
+        try:
+            w = self.winfo_containing(*self.winfo_pointerxy())
+        except (tk.TclError, KeyError):
+            return
+        while w is not None and w is not self:
+            w = getattr(w, "master", None)
+        self.hover(w is self)
+
+    def hover(self, on):
+        if on != self.hovering and self.winfo_exists():
+            self.hovering = on
+            self.set_fill(self.hover_fill if on else self.fill)
+
+
+def pill(parent, text, fg, bg, page, size=8, weight="bold", padx=9, pady=2, dot=None):
+    """Small rounded tag. The text is a real Label (inside a canvas) so it stays readable and testable."""
+    c = tk.Canvas(parent, bg=page, highlightthickness=0, bd=0)
+    lab = tk.Label(c, text=text, bg=bg, fg=fg, font=(FONT, size, weight), padx=0, pady=px(pady))
+    lw, lh = lab.winfo_reqwidth(), lab.winfo_reqheight()
+    gap, dotw = px(padx), (px(11) if dot else 0)
+    w, h = lw + 2 * gap + dotw, lh
+    c.configure(width=w, height=h)
+    round_rect(c, 0, 0, w - 1, h - 1, h // 2, fill=bg, outline="")
+    if dot:
+        d = px(6)
+        c.create_oval(gap, h // 2 - d // 2, gap + d, h // 2 + d // 2, fill=dot, outline="")
+    c.create_window(gap + dotw + lw // 2, h // 2, window=lab)
+    return c
+
+
+def rbtn(parent, text, command, kind="secondary", size=10, padx=14, pady=7, parent_bg=None, radius=9, width=None):
+    """A Btn drawn on a rounded pill. Returns the Btn; .pack/.grid act on the pill, so it is a drop-in.
+    `width` (px at 100%) fixes the pill's total width so buttons line up from row to row; it never goes below the text."""
+    pbg = parent_bg or parent.cget("bg")
+    wrap = tk.Canvas(parent, bg=pbg, highlightthickness=0, bd=0)
+    b = Btn(wrap, text, command, kind=kind, size=size, padx=padx, pady=pady, bg_parent=pbg)
+    m = px(radius)
+    w, h = max(b.winfo_reqwidth() + 2 * m, px(width) if width else 0), b.winfo_reqheight()
+    wrap.configure(width=w, height=h)
+    shape = round_rect(wrap, 0, 0, w - 1, h - 1, min(m, h // 2), fill=b.cget("bg"), outline="")
+    wrap.create_window(w // 2, h // 2, window=b, width=w - 2 * m, height=h)
+    b.on_paint = lambda bg: wrap.itemconfigure(shape, fill=bg)
+    b._paint(False)
+    for ev, fn in (("<Enter>", lambda e: b._paint(True)), ("<Leave>", lambda e: b._paint(False)),
+                   ("<Button-1>", lambda e: b.enabled and b.command())):
+        wrap.bind(ev, fn)
+    b.pack, b.grid, b.pack_forget = wrap.pack, wrap.grid, wrap.pack_forget
+    return b
+
+
+def meter(parent, width, height, pct, color, track, page):
+    """Rounded progress bar: smooth track plus a smooth fill (never thinner than a full cap)."""
+    c = tk.Canvas(parent, width=width, height=height, bg=page, highlightthickness=0, bd=0)
+    r = height // 2
+    round_rect(c, 0, 0, width - 1, height - 1, r, fill=track, outline="")
+    if pct and pct > 0:
+        fw = min(width, max(height, int(width * min(pct, 100) / 100)))
+        round_rect(c, 0, 0, fw - 1, height - 1, r, fill=color, outline="")
+    return c
+
+
+def monogram(parent, letter, color, size, page, radius=0.32):
+    s = px(size)
+    c = tk.Canvas(parent, width=s, height=s, bg=page, highlightthickness=0, bd=0)
+    round_rect(c, 0, 0, s - 1, s - 1, int(s * radius), fill=color, outline="")
+    c.create_text(s // 2, s // 2 - 1, text=(letter or "?").upper(), fill="#ffffff", font=(FONT, int(size * 0.34) + 1, "bold"))
+    return c
+
+
+def level_color(pct):
+    return PAL["good"] if pct < 70 else PAL["warn"] if pct < 90 else PAL["bad"]
+
+
+def clock_label(epoch):
+    """"4:00 PM" today, "tomorrow 4:00 PM", else "Fri 4:00 PM" (rounded to the minute, like core.fmt_clock)."""
+    t = datetime.fromtimestamp(round(epoch / 60) * 60)
+    clock = t.strftime("%I:%M %p").lstrip("0")
+    days = (t.date() - datetime.now().date()).days
+    return clock if days <= 0 else f"tomorrow {clock}" if days == 1 else t.strftime("%a ") + clock
+
+
+def window_info(label, w):
+    """What one usage window should say: (big text, colour, bar pct, caption, caption colour, caption bold)."""
+    p = PAL
+    if w["over"]:
+        return "Fresh", p["good"], 0, f"Full {label.lower()} available", p["good"], False
+    pct = w["pct"] or 0
+    if pct >= 100:
+        until = f"Full until {clock_label(w['resetsAt'])}" if w.get("resetsAt") else "Full"
+        return f"{pct}%", p["bad"], 100, until, p["bad"], True
+    cap = ""
+    if w.get("resetsAt"):
+        left = w["resetsAt"] - time.time()
+        cap = f"Resets in {core.fmt_duration(left)}" if left < 86400 else f"Resets {core.fmt_clock(w['resetsAt'])}"
+    return f"{pct}%", (p["text"] if pct < 70 else level_color(pct)), pct, cap, p["muted"], False
 
 
 class HintEntry(tk.Entry):
@@ -422,6 +612,13 @@ def show_test_results(parent, name, rows):
 
 
 # --------------------------------------------------------------------------- app
+# Fixed column grid of a list row (px at 100%): avatar | name/status zone | meters | buttons. Every row uses the same
+# widths, so meters and buttons line up; only the name is shortened (with an ellipsis) to fit its zone.
+ROW_INNER, ROW_AVATAR, ROW_METERS, ROW_BTN_W, ROW_MORE_W = 432, 44, 126, 94, 26
+ROW_RIGHT = ROW_BTN_W + 2 + ROW_MORE_W  # main button + gap + the "⋯" pill
+ROW_ZONE = ROW_INNER - ROW_AVATAR - ROW_METERS - ROW_RIGHT
+
+
 class App:
     POLL_MS = 2500
 
@@ -450,6 +647,7 @@ class App:
         self.status_kind = "muted"
         self.route = {"kind": "account"}
         self.providers = {}
+        self.items = {}
         self.scrollable = False
         self.fonts = {}
 
@@ -457,7 +655,7 @@ class App:
         shell.pack(fill="both", expand=True)
         tk.Label(shell, text="Claude Accounts", bg=PAL["bg"], fg=PAL["text"], font=(FONT, 18, "bold")).pack(anchor="w")
         tk.Label(shell, text="Choose what Claude Code uses: a Claude account or another provider.", bg=PAL["bg"],
-                 fg=PAL["muted"], font=(FONT, 10)).pack(anchor="w", pady=(px(2), px(14)))
+                 fg=PAL["muted"], font=(FONT, 10)).pack(anchor="w", pady=(px(2), px(10)))
         self.banner_host = tk.Frame(shell, bg=PAL["bg"])
         self.banner_host.pack(fill="x")
         # The cards live in a canvas so a long list scrolls instead of making the window taller than the screen.
@@ -472,17 +670,25 @@ class App:
         self.thumb.bind("<Button-1>", self.drag_thumb)
         self.thumb.bind("<B1-Motion>", self.drag_thumb)
         self.root.bind("<MouseWheel>", self.on_wheel)
+        tk.Frame(shell, height=1, bg=PAL["hair"]).pack(fill="x", pady=(px(10), 0))
         footer = tk.Frame(shell, bg=PAL["bg"])
-        footer.pack(fill="x", pady=(px(12), 0))
-        self.add_btn = Btn(footer, "+  Add account", self.add_account, kind="primary", size=10, padx=16, pady=9)
+        footer.pack(fill="x", pady=(px(10), 0))
+        self.add_btn = rbtn(footer, "+  Add account", self.add_account, kind="primary", size=10, padx=14, pady=8,
+                            parent_bg=PAL["bg"])
         self.add_btn.pack(side="left")
-        self.provider_btn = Btn(footer, "+  Add provider", self.add_provider, size=10, padx=14, pady=9)
-        self.provider_btn.pack(side="left", padx=(px(8), 0))
-        self.usage_btn = Btn(footer, "↻  Refresh usage", lambda: self.fetch_usage(manual=True), size=10, padx=14, pady=9)
-        self.usage_btn.pack(side="left", padx=(px(8), 0))
-        self.status = tk.Label(shell, text="", bg=PAL["bg"], fg=PAL["muted"], font=(FONT, 9), justify="left",
-                               wraplength=px(456), anchor="w")
-        self.status.pack(fill="x", pady=(px(12), 0))
+        self.provider_btn = rbtn(footer, "+  Add provider", self.add_provider, kind="ghost", size=10, padx=6, pady=8,
+                                 parent_bg=PAL["bg"])
+        self.provider_btn.pack(side="left", padx=(px(6), 0))
+        self.usage_btn = rbtn(footer, "↻  Refresh usage", lambda: self.fetch_usage(manual=True), kind="ghost", size=10,
+                              padx=6, pady=8, parent_bg=PAL["bg"])
+        self.usage_btn.pack(side="left")
+        # Status line as a quiet toast row: only takes space while it has something to say.
+        self.toast = Surface(shell, fill=PAL["card"], radius=10, padx=12, pady=8)
+        self.toast_dot = tk.Label(self.toast.body, text="●", bg=PAL["card"], fg=PAL["muted"], font=(FONT, 7))
+        self.toast_dot.pack(side="left", padx=(0, px(8)), anchor="n", pady=(px(3), 0))
+        self.status = tk.Label(self.toast.body, text="", bg=PAL["card"], fg=PAL["muted"], font=(FONT, 9), justify="left",
+                               wraplength=px(456 - 24 - 20), anchor="w")
+        self.status.pack(side="left", fill="x", expand=True)
 
         self.refresh()
         center(self.root)
@@ -494,7 +700,16 @@ class App:
     # ---- status + background work
     def say(self, text, kind="muted"):
         color = {"muted": PAL["muted"], "ok": PAL["good"], "warn": PAL["warn"], "bad": PAL["bad"]}[kind]
-        self.status.configure(text=text, fg=color)
+        tint = {"muted": PAL["card"], "ok": PAL["good_bg"], "warn": PAL["banner"],
+                "bad": mix(PAL["card"], PAL["bad"], 0.14)}[kind]
+        self.status.configure(text=text, fg=PAL["text"] if kind == "muted" else color)
+        self.toast_dot.configure(fg=color)
+        self.toast.set_fill(tint)
+        if text:
+            if not self.toast.winfo_manager():
+                self.toast.pack(fill="x", pady=(px(12), 0))
+        else:
+            self.toast.pack_forget()
 
     def run_bg(self, work, done):
         def runner():
@@ -542,6 +757,7 @@ class App:
     def refresh(self, force=False):
         st = self.snapshot()  # also keeps saved tokens current
         usage = {p["id"]: p["usage"] for p in st["profiles"]}
+        items = {p["id"]: p for p in st["profiles"]}
         in_use = {p["id"] for p in st["profiles"] if p["inUse"]}
         live = core.read_live()
         profiles = core.list_profiles()
@@ -553,12 +769,15 @@ class App:
                      for p in st["providers"]),
                tuple((p["id"], p["name"], core.refresh_expired(p["claudeAiOauth"]),
                       int(d) if (d := core.refresh_days_left(p["claudeAiOauth"])) is not None else None,
-                      (usage[p["id"]] or {}).get("text"), (usage[p["id"]] or {}).get("note"))
+                      (usage[p["id"]] or {}).get("text"), (usage[p["id"]] or {}).get("note"),
+                      (usage[p["id"]] or {}).get("signInRejected"), (items.get(p["id"]) or {}).get("signInRejected"),
+                      (items.get(p["id"]) or {}).get("plan"))
                      for p in profiles))
         if sig == self.signature and not force:
             return
         self.signature = sig
         self.usage = usage
+        self.items = items
         self.route = route
         self.providers = {p["id"]: p for p in st["providers"]}
         self.render(st, live, live_id, profiles, in_use)
@@ -581,14 +800,13 @@ class App:
                 if exc:
                     self.say(f"Could not refresh usage: {exc}", "bad")
                 else:
-                    idle = [s for s in report.values() if s == "token-expired"]
+                    idle = [s for s in report.values() if s == "signin-rejected"]
                     limited = [s for s in report.values() if s == "http-429" or s == "backoff"]
                     note = ""
                     if limited:
                         note = " The server asked us to slow down, so some numbers are older."
                     elif idle:
-                        note = (" Accounts you haven't used for a few hours can't be read without signing in "
-                                "again, so those show their last known numbers.")
+                        note = " A saved sign-in was refused. Use Sign in again on that account."
                     self.say("Usage updated." + note, "ok" if not (limited or idle) else "muted")
             try:
                 self.refresh(force=True)
@@ -596,35 +814,6 @@ class App:
                 pass
 
         self.run_bg(lambda: core.refresh_usage(force=manual), done)
-
-    def render_usage(self, parent, u):
-        row = tk.Frame(parent, bg=PAL["card"])
-        if not u:
-            tk.Label(row, text="No usage numbers yet. They appear once this account has been used.",
-                     bg=PAL["card"], fg=PAL["muted"], font=(FONT, 9), wraplength=px(250), justify="left").pack(anchor="w")
-            return row
-        width = px(104)
-        for label, w in (("Session", u["session"]), ("Week", u["week"])):
-            if not w:
-                continue
-            col = tk.Frame(row, bg=PAL["card"])
-            col.pack(side="left", padx=(0, px(18)), anchor="n")
-            pct = 0 if w["over"] else w["pct"]
-            color = PAL["good"] if pct < 70 else PAL["warn"] if pct < 90 else PAL["bad"]
-            tk.Label(col, text=f'{label} {"reset" if w["over"] else str(pct) + "%"}', bg=PAL["card"], fg=PAL["text"],
-                     font=(FONT, 9, "bold")).pack(anchor="w")
-            bar = tk.Canvas(col, width=width, height=px(5), bg=PAL["border"], highlightthickness=0)
-            bar.create_rectangle(0, 0, max(px(2), width * pct / 100) if pct else 0, px(5), fill=color, outline="")
-            bar.pack(anchor="w", pady=(px(3), px(2)))
-            caption = ""
-            if not w["over"] and w["resetsAt"]:
-                left = w["resetsAt"] - time.time()
-                caption = f"resets in {core.fmt_duration(left)}" if left < 86400 else f"resets {core.fmt_clock(w['resetsAt'])}"
-            tk.Label(col, text=caption, bg=PAL["card"], fg=PAL["muted"], font=(FONT, 8)).pack(anchor="w")
-        if u["note"]:
-            tk.Label(row, text=u["note"], bg=PAL["card"], fg=PAL["muted"], font=(FONT, 8, "italic")).pack(
-                side="left", anchor="n", pady=(px(1), 0))
-        return row
 
     def font(self, size, weight="normal"):
         key = (size, weight)
@@ -645,31 +834,51 @@ class App:
         self.render_route_banner(st["route"])
         if live and live_id not in saved_ids:
             self.render_banner(live)
-        self.render_section("ACCOUNTS", first=True)
+        # Hero: whatever Claude Code is using right now (a provider, else the account in use).
+        active_provider = next((p for p in st["providers"] if p["active"]), None)
+        hero_account = None if active_provider else next((p for p in profiles if p["id"] in in_use), None)
+        if active_provider:
+            self.render_provider_card(active_provider, hero=True)
+        elif hero_account:
+            self.render_card(hero_account, active=True, in_use=True, hero=True)
+        self.render_section("ACCOUNTS", first=not (active_provider or hero_account))
+        rows = sorted((p for p in profiles if p is not hero_account), key=self.account_rank)
         if not profiles and not live:
-            box = tk.Frame(self.list_host, bg=PAL["card"], highlightthickness=1, highlightbackground=PAL["border"],
-                           padx=px(18), pady=px(18))
-            box.pack(fill="x", pady=px(5))
-            tk.Label(box, text="Not signed in", bg=PAL["card"], fg=PAL["text"], font=(FONT, 11, "bold")).pack(anchor="w")
+            box = tk.Frame(self.list_host, bg=PAL["bg"], padx=px(4), pady=px(10))
+            box.pack(fill="x")
+            tk.Label(box, text="Not signed in", bg=PAL["bg"], fg=PAL["text"], font=(FONT, 11, "bold")).pack(anchor="w")
             tk.Label(box, text="Add an account to sign in. It will be saved here so you can switch back anytime.",
-                     bg=PAL["card"], fg=PAL["muted"], font=(FONT, 9), wraplength=px(400), justify="left").pack(anchor="w", pady=(px(4), 0))
-        for p in profiles:
+                     bg=PAL["bg"], fg=PAL["muted"], font=(FONT, 9), wraplength=px(420), justify="left").pack(anchor="w", pady=(px(4), 0))
+        elif not rows:
+            self.render_hint("No other saved accounts. Add one to switch between them in a click.")
+        for i, p in enumerate(rows):
+            if i:
+                self.divider()
             self.render_card(p, active=(p["id"] == live_id), in_use=(p["id"] in in_use))
         self.render_section("PROVIDERS")
-        for p in st["providers"]:
-            self.render_provider_card(p)
+        others = [p for p in st["providers"] if p is not active_provider]
         if not st["providers"]:
-            box = tk.Frame(self.list_host, bg=PAL["card"], highlightthickness=1, highlightbackground=PAL["border"],
-                           padx=px(14), pady=px(12))
-            box.pack(fill="x", pady=px(5))
-            tk.Label(box, text="Use other models, for example your own gateway. Click Add provider.", bg=PAL["card"],
-                     fg=PAL["muted"], font=(FONT, 9), wraplength=px(400), justify="left").pack(anchor="w")
+            self.render_hint("Use other models, for example your own gateway. Click Add provider.")
+        elif not others:
+            self.render_hint("No other providers saved.")
+        for i, p in enumerate(others):
+            if i:
+                self.divider()
+            self.render_provider_card(p)
         self.fit_list(frac)
 
     def render_section(self, title, first=False):
-        spaced = " ".join(title)
-        tk.Label(self.list_host, text=spaced, bg=PAL["bg"], fg=PAL["muted"], font=(FONT, 8, "bold"), anchor="w").pack(
-            fill="x", pady=(px(2) if first else px(12), 0))
+        row = tk.Frame(self.list_host, bg=PAL["bg"])
+        row.pack(fill="x", pady=(px(4) if first else px(14), px(2)))
+        tk.Label(row, text="\u2009".join(title), bg=PAL["bg"], fg=PAL["muted"], font=(FONT, 8, "bold"), anchor="w").pack(side="left")
+        tk.Frame(row, height=1, bg=PAL["hair"]).pack(side="left", fill="x", expand=True, padx=(px(10), 0))
+
+    def divider(self):
+        tk.Frame(self.list_host, height=1, bg=PAL["hair"]).pack(fill="x", padx=px(12))
+
+    def render_hint(self, text):
+        tk.Label(self.list_host, text=text, bg=PAL["bg"], fg=PAL["muted"], font=(FONT, 9), wraplength=px(420),
+                 justify="left", anchor="w").pack(anchor="w", padx=px(10), pady=(px(6), px(2)))
 
     def fit_list(self, frac):
         """Size the card area to its content; when that would make the window too tall, scroll instead."""
@@ -719,14 +928,15 @@ class App:
 
     def render_notice(self, text, tone="info", button=None):
         warn = tone != "info"
-        bg = PAL["banner"] if warn else PAL["card"]
-        box = tk.Frame(self.banner_host, bg=bg, padx=px(14), pady=px(12),
-                       highlightthickness=0 if warn else 1, highlightbackground=PAL["border"])
-        box.pack(fill="x", pady=(0, px(8)))
+        fill = PAL["banner"] if warn else PAL["card"]
+        panel = Surface(self.banner_host, fill=fill, radius=12, outline=None if warn else PAL["border"], padx=14, pady=10)
+        panel.pack(fill="x", pady=(0, px(10)))
+        box = panel.body
         if button:
-            Btn(box, button[0], button[1], kind="primary", padx=14, pady=6).pack(side="right", padx=(px(10), 0))
-        tk.Label(box, text=text, bg=bg, fg=PAL["warn"] if tone == "warn" else PAL["text"], font=(FONT, 9, "bold" if warn else "normal"),
-                 wraplength=px(button and 330 or 428), justify="left", anchor="w").pack(side="left", fill="x", expand=True)
+            rbtn(box, button[0], button[1], kind="primary", padx=12, pady=5, parent_bg=fill).pack(side="right", padx=(px(10), 0))
+        tk.Label(box, text=text, bg=fill, fg=PAL["warn"] if tone == "warn" else PAL["muted"],
+                 font=(FONT, 9, "bold" if warn else "normal"),
+                 wraplength=px(button and 320 or 410), justify="left", anchor="w").pack(side="left", fill="x", expand=True)
 
     def render_route_banner(self, route):
         if route["kind"] == "provider" and route.get("missing"):
@@ -739,101 +949,246 @@ class App:
 
     def render_banner(self, live):
         info = core.describe(live)
-        box = tk.Frame(self.banner_host, bg=PAL["banner"], padx=px(14), pady=px(12))
-        box.pack(fill="x", pady=(0, px(8)))
+        panel = Surface(self.banner_host, fill=PAL["banner"], radius=12, padx=14, pady=10)
+        panel.pack(fill="x", pady=(0, px(10)))
+        box = panel.body
         text = tk.Frame(box, bg=PAL["banner"])
         text.pack(side="left", fill="x", expand=True)
         tk.Label(text, text="Current login isn't saved yet", bg=PAL["banner"], fg=PAL["text"],
                  font=(FONT, 10, "bold")).pack(anchor="w")
         tk.Label(text, text=f'{info["email"]} · {info["detail"]}', bg=PAL["banner"], fg=PAL["muted"],
                  font=(FONT, 9)).pack(anchor="w")
-        Btn(box, "Save it", lambda: self.save_current(live), kind="primary", padx=14, pady=6).pack(side="right")
+        rbtn(box, "Save it", lambda: self.save_current(live), kind="primary", padx=12, pady=5,
+             parent_bg=PAL["banner"]).pack(side="right")
 
-    def render_card(self, p, active, in_use):
-        info = core.describe(p)
+    # ---- accounts
+    def account_view(self, p, active):
+        item = self.items.get(p["id"]) or {}
+        u = self.usage.get(p["id"])
         expired = core.refresh_expired(p["claudeAiOauth"]) and not active
-        edge = PAL["accent"] if in_use else PAL["border"]
-        outer = tk.Frame(self.list_host, bg=edge, padx=1, pady=1)
-        outer.pack(fill="x", pady=px(5))
-        card = tk.Frame(outer, bg=PAL["card"], padx=px(14), pady=px(12))
-        card.pack(fill="x")
+        rejected = bool(item.get("signInRejected") or (u or {}).get("signInRejected"))
+        return u, expired, rejected, core.refresh_days_left(p["claudeAiOauth"])
 
-        size = px(44)
-        avatar = tk.Canvas(card, width=size, height=size, bg=PAL["card"], highlightthickness=0)
-        avatar.create_oval(2, 2, size - 2, size - 2, fill=PAL["team"] if info["team"] else PAL["accent"], outline="")
-        avatar.create_text(size // 2, size // 2, text=(p["name"][:1] or "?").upper(), fill="#ffffff",
-                           font=(FONT, 14, "bold"))
-        avatar.grid(row=0, column=0, rowspan=2, padx=(0, px(12)), sticky="n")
+    def account_rank(self, p):
+        """Rows most worth switching to first: live room, then unknown/old numbers, then full, then needs sign-in."""
+        u, expired, rejected, _ = self.account_view(p, False)
+        if expired or rejected:
+            return (3, 0)
+        if not u:
+            return (1, 0)
+        wins = [w for w in (u["session"], u["week"]) if w]
+        used = [w["pct"] for w in wins if not w["over"] and w["pct"] is not None]
+        if any(x >= 100 for x in used):
+            return (2, 0)
+        return (1 if u["stale"] else 0, max(used) if used else 0)
 
-        tk.Label(card, text=p["name"], bg=PAL["card"], fg=PAL["text"], font=(FONT, 12, "bold"), anchor="w").grid(
-            row=0, column=1, sticky="sw")
-        tk.Label(card, text=f'{info["email"]} · {info["detail"]}', bg=PAL["card"], fg=PAL["muted"], font=(FONT, 9),
-                 anchor="w").grid(row=1, column=1, sticky="nw")
-        self.render_usage(card, self.usage.get(p["id"])).grid(row=2, column=1, sticky="nw", pady=(px(8), 0))
-        days = core.refresh_days_left(p["claudeAiOauth"])
-        warning = None
+    def account_status(self, u, expired, rejected, days, active):
+        """(headline, colour, [(extra text, colour, italic)]) for a list row."""
+        p, extra = PAL, []
         if expired:
-            warning = ("Sign-in expired. Use Add account to sign in again.", PAL["bad"])
-        elif not active and days is not None and days < 7:
-            when = "today" if days < 1 else f"in {int(days)} day{'s' if int(days) != 1 else ''}"
-            warning = (f"Saved sign-in expires {when}. Use it before then.", PAL["warn"])
-        if warning:
-            tk.Label(card, text=warning[0], bg=PAL["card"], fg=warning[1], font=(FONT, 9, "bold"), anchor="w").grid(
-                row=3, column=1, sticky="nw", pady=(px(6), 0))
-        avatar.grid_configure(rowspan=4 if warning else 3)
-
-        right = tk.Frame(card, bg=PAL["card"])
-        right.grid(row=0, column=2, rowspan=4 if warning else 3, sticky="ne")
-        card.columnconfigure(1, weight=1)
-        if in_use:
-            tk.Label(right, text="IN USE", bg=PAL["good_bg"], fg=PAL["good"], font=(FONT, 8, "bold"),
-                     padx=px(9), pady=px(3)).pack(side="left", padx=(0, px(6)))
+            head = ("Sign-in expired", p["bad"])
+        elif rejected:
+            head = ("Sign-in rejected", p["bad"])
+        elif not u:
+            head = ("No usage yet", p["muted"])
         else:
-            sw = Btn(right, "Switch", lambda pid=p["id"]: self.switch(pid), padx=14, pady=6)
-            sw.pack(side="left", padx=(0, px(6)))
-            if expired:
-                sw.set_enabled(False)
-        more = Btn(right, "⋯", lambda b=None, pid=p["id"], n=p["name"]: None, kind="ghost", size=12, padx=8, pady=2)
-        more.pack(side="left")
-        more.command = lambda m=more, pid=p["id"], n=p["name"], a=active: self.card_menu(m, pid, n, a)
+            wins = [(n, w) for n, w in (("Session", u["session"]), ("Week", u["week"])) if w]
+            full = [w for n, w in wins if not w["over"] and (w["pct"] or 0) >= 100]
+            fresh = [n for n, w in wins if w["over"]]
+            used = [w["pct"] for n, w in wins if not w["over"] and w["pct"] is not None]
+            if full:
+                until = max((w["resetsAt"] or 0) for w in full)
+                head = (f"Full until {clock_label(until)}" if until else "Full", p["bad"])
+            elif fresh and not used:
+                head = ("Fresh: all available", p["good"])
+            elif fresh:
+                head = (f"{fresh[0]} fresh", p["good"])
+            else:
+                top = max(used) if used else 0
+                head = ("Room left", p["good"]) if top < 70 else ("Getting full", p["warn"]) if top < 90 else \
+                    ("Almost full", p["bad"])
+            if u["stale"] and head[1] in (p["good"], p["warn"]) and not fresh:
+                head = (head[0], p["muted"])
+            if u["note"]:
+                extra.append((u["note"], p["muted"], True))
+        if not active and not expired and days is not None and days < 7:
+            when = "today" if days < 1 else f"in {int(days)} day{'s' if int(days) != 1 else ''}"
+            extra.append((f"Sign-in expires {when}", p["warn"], False))
+        return head[0], head[1], extra
 
-    def render_provider_card(self, p):
-        active = p["active"]
-        outer = tk.Frame(self.list_host, bg=PAL["accent"] if active else PAL["border"], padx=1, pady=1)
-        outer.pack(fill="x", pady=px(5))
-        card = tk.Frame(outer, bg=PAL["card"], padx=px(14), pady=px(12))
-        card.pack(fill="x")
-
-        size = px(44)
-        avatar = tk.Canvas(card, width=size, height=size, bg=PAL["card"], highlightthickness=0)
-        round_rect(avatar, 2, 2, size - 2, size - 2, px(10), fill=PAL["provider"], outline="")
-        avatar.create_text(size // 2, size // 2, text=(p["name"][:1] or "?").upper(), fill="#ffffff",
-                           font=(FONT, 14, "bold"))
-        avatar.grid(row=0, column=0, rowspan=3, padx=(0, px(12)), sticky="n")
-
-        tk.Label(card, text=p["name"], bg=PAL["card"], fg=PAL["text"], font=(FONT, 12, "bold"), anchor="w").grid(
+    def render_card(self, p, active, in_use, hero=False):
+        info = core.describe(p)
+        u, expired, rejected, days = self.account_view(p, active)
+        if hero:
+            return self.render_hero_account(p, info, u, rejected)
+        needs = expired or rejected
+        stale = bool(u and u["stale"]) or needs
+        page = PAL["bg"]
+        panel = Surface(self.list_host, fill=page, hover=PAL["row_hover"], radius=12, padx=12, pady=7)
+        panel.pack(fill="x")
+        card = panel.body
+        soften = (lambda c: mix(c, page, 0.4)) if stale else (lambda c: c)
+        avatar = monogram(card, p["name"][:1], soften(PAL["team"] if info["team"] else PAL["accent"]), 36, page)
+        head, head_color, extra = self.account_status(u, expired, rejected, days, active)
+        rows = 2 + (1 if extra else 0)
+        avatar.grid(row=0, column=0, rowspan=rows, padx=(0, px(8)))
+        plan_text = fit(info["plan"], self.font(9), px(44))
+        name_w = px(ROW_ZONE) - self.font(9).measure(plan_text) - px(8)   # name + plan share one fixed zone
+        tk.Label(card, bd=0, padx=0, text=fit(p["name"], self.font(11, "bold"), name_w), bg=page,
+                 fg=mix(PAL["text"], page, 0.3) if stale else PAL["text"], font=(FONT, 11, "bold"), anchor="w").grid(
             row=0, column=1, sticky="sw")
-        tk.Label(card, text=p["host"], bg=PAL["card"], fg=PAL["muted"], font=(FONT, 9), anchor="w").grid(
-            row=1, column=1, sticky="nw")
-        lines = tk.Frame(card, bg=PAL["card"])
-        lines.grid(row=2, column=1, columnspan=2, sticky="nw", pady=(px(6), 0))
-        small = self.font(9)
-        for label, model in model_groups(p["models"]):
-            tk.Label(lines, text=fit(f"{label} → {model}", small, px(366)), bg=PAL["card"], fg=PAL["muted"],
-                     font=(FONT, 9), anchor="w").pack(anchor="w")
+        # the name label above is the card's key widget: its .master (this frame) holds everything else
+        tk.Label(card, bd=0, padx=0, text=plan_text, bg=page, fg=PAL["muted"], font=(FONT, 9),
+                 anchor="w").grid(row=0, column=2, sticky="sw", padx=(px(8), 0), pady=(0, px(2)))
+        line = tk.Frame(card, bg=page)
+        line.grid(row=1, column=1, columnspan=3, sticky="w")
+        tk.Label(line, bd=0, padx=0, text=head, bg=page, fg=head_color, font=(FONT, 9, "bold" if head_color == PAL["bad"] else "normal"),
+                 anchor="w", justify="left", wraplength=px(ROW_ZONE)).pack(side="left")
+        if extra:
+            ex = tk.Frame(card, bg=page)
+            ex.grid(row=2, column=1, columnspan=3, sticky="w")
+            for text, color, italic in extra:
+                tk.Label(ex, bd=0, padx=0, text=text, bg=page, fg=color, font=(FONT, 8, "italic" if italic else "normal"),
+                         anchor="w", justify="left", wraplength=px(ROW_ZONE)).pack(anchor="w")
+        card.columnconfigure(0, minsize=px(ROW_AVATAR))
+        card.columnconfigure(3, weight=1)
+        card.columnconfigure(4, minsize=px(ROW_METERS))
+        card.columnconfigure(5, minsize=px(ROW_RIGHT))
+        if u and not needs:
+            box = tk.Frame(card, bg=page)
+            box.grid(row=0, column=4, rowspan=rows, sticky="e", padx=(0, px(6)))
+            box.columnconfigure(0, minsize=px(36))
+            box.columnconfigure(2, minsize=px(28))
+            for r, (label, w) in enumerate((("Session", u["session"]), ("Week", u["week"]))):
+                if not w:
+                    continue
+                big, color, pct, _cap, _cc, _b = window_info(label, w)
+                if stale and not w["over"]:
+                    color = mix(color, page, 0.45)
+                tk.Label(box, bd=0, padx=0, text=label, bg=page, fg=PAL["muted"], font=(FONT, 8), anchor="w").grid(
+                    row=r, column=0, sticky="w")
+                bar = meter(box, px(36), px(6), pct, soften(level_color(pct)) if not w["over"] else PAL["good"],
+                            PAL["track"], page)
+                bar.grid(row=r, column=1, padx=(px(2), px(4)), pady=px(2))
+                tk.Label(box, bd=0, padx=0, text=("fresh" if w["over"] else big), bg=page,
+                         fg=color if (w["over"] or not stale) else PAL["muted"],
+                         font=(FONT, 8, "bold"), anchor="e").grid(row=r, column=2, sticky="e")
+        right = tk.Frame(card, bg=page)
+        right.grid(row=0, column=5, rowspan=rows, sticky="e")
+        if needs:
+            rbtn(right, "Sign in again", self.add_account, kind="soft", size=9, padx=4, pady=6, parent_bg=page, radius=7,
+                 width=ROW_BTN_W).pack(side="left")
+        else:
+            rbtn(right, "Switch", lambda pid=p["id"]: self.switch(pid), size=9, padx=4, pady=6, parent_bg=page, radius=7,
+                 width=ROW_BTN_W).pack(side="left")
+        more = rbtn(right, "⋯", lambda: None, kind="ghost", size=12, padx=0, pady=1, parent_bg=page, radius=4,
+                    width=ROW_MORE_W)
+        more.pack(side="left", padx=(px(2), 0))
+        more.command = lambda m=more, pid=p["id"], n=p["name"], a=active: self.card_menu(m, pid, n, a)
+        panel.arm()
 
-        right = tk.Frame(card, bg=PAL["card"])
+    def render_hero_account(self, p, info, u, rejected):
+        fill = PAL["hero"]
+        panel = Surface(self.list_host, fill=fill, radius=18, outline=PAL["hero_edge"], padx=18, pady=14)
+        panel.pack(fill="x", pady=(0, px(2)))
+        card = panel.body
+        monogram(card, p["name"][:1], PAL["team"] if info["team"] else PAL["accent"], 48, fill).grid(
+            row=0, column=0, rowspan=2, padx=(0, px(14)), sticky="n")
+        tk.Label(card, text=p["name"], bg=fill, fg=PAL["text"], font=(FONT, 15, "bold"), anchor="w").grid(
+            row=0, column=1, sticky="sw")
+        tk.Label(card, text=fit(f'{info["email"]} · {info["detail"]}', self.font(9), px(236)), bg=fill, fg=PAL["muted"],
+                 font=(FONT, 9), anchor="w").grid(row=1, column=1, sticky="nw")
+        right = tk.Frame(card, bg=fill)
+        right.grid(row=0, column=2, rowspan=2, sticky="ne")
+        card.columnconfigure(1, weight=1)
+        pill(right, "IN USE", PAL["good"], PAL["good_bg"], fill, padx=10, pady=3).pack(side="left", padx=(0, px(4)))
+        more = rbtn(right, "⋯", lambda: None, kind="ghost", size=12, padx=2, pady=1, parent_bg=fill, radius=5)
+        more.pack(side="left")
+        more.command = lambda m=more, pid=p["id"], n=p["name"]: self.card_menu(m, pid, n, True)
+        body = tk.Frame(card, bg=fill)
+        body.grid(row=2, column=0, columnspan=3, sticky="ew", pady=(px(14), 0))
+        if rejected:
+            tk.Label(body, text="Anthropic rejected this sign-in, so usage can't be read.", bg=fill, fg=PAL["bad"],
+                     font=(FONT, 9, "bold"), anchor="w").pack(anchor="w")
+            rbtn(body, "Sign in again", self.add_account, kind="primary", padx=14, pady=6, parent_bg=fill).pack(
+                anchor="w", pady=(px(8), 0))
+        if not u:
+            if not rejected:
+                tk.Label(body, text="No usage numbers yet. They appear once this account has been used.", bg=fill,
+                         fg=PAL["muted"], font=(FONT, 9), anchor="w").pack(anchor="w")
+        else:
+            stale = u["stale"]
+            cols = tk.Frame(body, bg=fill)
+            cols.pack(anchor="w", pady=(px(14) if rejected else 0, 0))
+            wins = [(n, w) for n, w in (("Session", u["session"]), ("Week", u["week"])) if w]
+            for i, (label, w) in enumerate(wins):
+                col = tk.Frame(cols, bg=fill)
+                col.grid(row=0, column=i, sticky="nw", padx=(0, px(24)) if i < len(wins) - 1 else 0)
+                big, color, pct, cap, cap_color, bold = window_info(label, w)
+                if stale and not w["over"]:
+                    color, cap_color = mix(color, fill, 0.35), mix(cap_color, fill, 0.35)
+                tk.Label(col, text=label.upper(), bg=fill, fg=PAL["muted"], font=(FONT, 8, "bold")).pack(anchor="w")
+                num = tk.Frame(col, bg=fill)
+                num.pack(anchor="w", pady=(px(1), px(5)))
+                tk.Label(num, text=big, bg=fill, fg=color, font=(FONT, 26, "bold")).pack(side="left")
+                if not w["over"]:
+                    tk.Label(num, text="used", bg=fill, fg=PAL["muted"], font=(FONT, 9)).pack(
+                        side="left", anchor="s", padx=(px(5), 0), pady=(0, px(7)))
+                bar_color = PAL["good"] if w["over"] else level_color(pct)
+                meter(col, px(198), px(8), pct, mix(bar_color, fill, 0.35) if stale and not w["over"] else bar_color,
+                      mix(PAL["track"], fill, 0.3), fill).pack(anchor="w")
+                tk.Label(col, text=cap, bg=fill, fg=cap_color, font=(FONT, 9, "bold" if bold else "normal")).pack(
+                    anchor="w", pady=(px(5), 0))
+            if u["models"] or u["note"]:
+                foot = tk.Frame(body, bg=fill)
+                foot.pack(fill="x", pady=(px(14), 0))
+                if u["models"]:
+                    tk.Label(foot, text="MODEL LIMITS", bg=fill, fg=PAL["muted"], font=(FONT, 8, "bold")).pack(
+                        side="left", padx=(0, px(8)))
+                for m in u["models"][:3]:
+                    pill(foot, f'{m["name"]} {m["pct"]}%', PAL["text"], PAL["chip"], fill, size=9, weight="normal",
+                         padx=9, pady=3, dot=level_color(m["pct"])).pack(side="left", padx=(0, px(6)))
+                if u["note"]:
+                    tk.Label(foot, text=u["note"], bg=fill, fg=PAL["muted"], font=(FONT, 8, "italic")).pack(side="right")
+
+    # ---- providers
+    def render_provider_card(self, p, hero=False):
+        active = p["active"]
+        fill = PAL["hero"] if hero else PAL["bg"]
+        if hero:
+            panel = Surface(self.list_host, fill=fill, radius=18, outline=PAL["hero_edge"], padx=18, pady=14)
+            panel.pack(fill="x", pady=(0, px(2)))
+        else:
+            panel = Surface(self.list_host, fill=fill, hover=PAL["row_hover"], radius=12, padx=12, pady=7)
+            panel.pack(fill="x")
+        card = panel.body
+        monogram(card, p["name"][:1], PAL["provider"], 48 if hero else 36, fill).grid(
+            row=0, column=0, rowspan=2 if hero else 3, padx=(0, px(14 if hero else 8)), sticky="n")
+        tk.Label(card, text=p["name"], bg=fill, fg=PAL["text"], font=(FONT, 15 if hero else 11, "bold"), anchor="w").grid(
+            row=0, column=1, sticky="sw")
+        tk.Label(card, text=p["host"], bg=fill, fg=PAL["muted"], font=(FONT, 9), anchor="w").grid(
+            row=1, column=1, sticky="nw")
+        right = tk.Frame(card, bg=fill)
         right.grid(row=0, column=2, rowspan=2, sticky="ne")
         card.columnconfigure(1, weight=1)
         if active:
-            tk.Label(right, text="IN USE", bg=PAL["good_bg"], fg=PAL["good"], font=(FONT, 8, "bold"),
-                     padx=px(9), pady=px(3)).pack(side="left", padx=(0, px(6)))
+            pill(right, "IN USE", PAL["good"], PAL["good_bg"], fill, padx=10, pady=3).pack(side="left", padx=(0, px(4)))
         else:
-            Btn(right, "Switch", lambda pid=p["id"]: self.switch_provider(pid), padx=14, pady=6).pack(
-                side="left", padx=(0, px(6)))
-        more = Btn(right, "⋯", lambda: None, kind="ghost", size=12, padx=8, pady=2)
-        more.pack(side="left")
+            rbtn(right, "Switch", lambda pid=p["id"]: self.switch_provider(pid), size=9, padx=4, pady=6, parent_bg=fill,
+                 radius=7, width=ROW_BTN_W).pack(side="left")
+        more = rbtn(right, "⋯", lambda: None, kind="ghost", size=12, padx=0 if not hero else 2, pady=1, parent_bg=fill,
+                    radius=4 if not hero else 5, width=None if hero else ROW_MORE_W)
+        more.pack(side="left", padx=(px(2), 0))
         more.command = lambda m=more, item=p: self.provider_menu(m, item)
+        lines = tk.Frame(card, bg=fill)
+        lines.grid(row=2, column=1, columnspan=2, sticky="nw", pady=(px(14 if hero else 6), 0))
+        if hero:
+            tk.Label(lines, text="MODEL MAP", bg=fill, fg=PAL["muted"], font=(FONT, 8, "bold")).pack(anchor="w", pady=(0, px(4)))
+        small = self.font(9)
+        for label, model in model_groups(p["models"]):
+            tk.Label(lines, text=fit(f"{label} → {model}", small, px(366)), bg=fill,
+                     fg=PAL["text"] if hero else PAL["muted"], font=(FONT, 9), anchor="w").pack(anchor="w", pady=(0, px(1)))
+        panel.arm()
 
     def popup(self, anchor, entries):
         menu = tk.Menu(self.root, tearoff=0, bg=PAL["card"], fg=PAL["text"], activebackground=PAL["accent"],

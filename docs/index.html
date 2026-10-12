@@ -114,7 +114,7 @@
       "name": "Can I see usage for each account?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. The window and the status bar show the 5-hour session and 7-day weekly usage with reset times. The active account's numbers come from Claude Code itself. Other accounts are read live while their saved sign-in is still fresh (about 8 hours after you last used them), otherwise you see the last known numbers marked \"as of\"."
+        "text": "Yes. The window and the status bar show the 5-hour session and 7-day weekly usage with reset times. The active account's numbers come from Claude Code itself. Accounts not in use are read live too: when a saved account's short-lived access token has expired, the app renews it exactly like Claude Code does and saves the new tokens back into that saved account. The account in use is left to Claude Code. If the server refuses a saved sign-in, the card says to sign in again."
       }
     },
     {
@@ -345,7 +345,7 @@
     </div>
     <figure class="figure">
       <img src="assets/usage-bars.svg" width="960" height="360" alt="Usage bars for Personal and Team accounts with session and week percentages" loading="lazy" decoding="async">
-      <figcaption>The active account comes from Claude Code's own cache. Other accounts are read only while their saved sign-in is still valid.</figcaption>
+      <figcaption>The active account comes from Claude Code's own cache. Accounts not in use are read live too; an expired access token is renewed and saved back.</figcaption>
     </figure>
   </div>
 </section>
@@ -401,7 +401,7 @@
     </div>
     <ul class="priv">
       <li><strong>Encrypted logins</strong><span>Saved logins are encrypted with Windows DPAPI and can be read only by the current Windows user.</span></li>
-      <li><strong>No server, no telemetry</strong><span>The only network calls are Claude Code's own browser sign-in and a read-only usage request made with your own token.</span></li>
+      <li><strong>No server, no telemetry</strong><span>The only network calls are Claude Code's own browser sign-in, a read-only usage request and, for a saved account with an expired token, a token renewal, all made with your own tokens.</span></li>
       <li><strong>Backup and rollback</strong><span>Each switch backs up the current login, keeps a recovery journal, and rolls back if a file write fails.</span></li>
       <li><strong>Only the login changes</strong><span>Skills, CLAUDE.md, memory, MCP logins and chat history are shared and untouched.</span></li>
     </ul>
@@ -448,7 +448,7 @@
       <h3>Does switching change my Claude Code settings, skills, memory or chat history?</h3>
       <p>No. Only the login is swapped: the claudeAiOauth entry in ~/.claude/.credentials.json and the oauthAccount entry in ~/.claude.json (plus one cached flag that Claude Code recreates by itself). Skills, CLAUDE.md, memory, MCP logins and chat history are shared by every account.</p>
       <h3>Can I see usage for each account?</h3>
-      <p>Yes. The window and the status bar show the 5-hour session and 7-day weekly usage with reset times. The active account's numbers come from Claude Code itself. Other accounts are read live while their saved sign-in is still fresh (about 8 hours after you last used them), otherwise you see the last known numbers marked "as of".</p>
+      <p>Yes. The window and the status bar show the 5-hour session and 7-day weekly usage with reset times. The active account's numbers come from Claude Code itself. Accounts not in use are read live too: when a saved account's short-lived access token has expired, the app renews it exactly like Claude Code does and saves the new tokens back into that saved account. The account in use is left to Claude Code. If the server refuses a saved sign-in, the card says to sign in again.</p>
       <h3>Which platforms and versions does it support?</h3>
       <p>Windows 10 and 11 with Python 3.9 or newer (tested on Python 3.11). It works with the Claude Code command line and the Claude Code VS Code extension. macOS and Linux are not supported yet because the encryption uses Windows DPAPI.</p>
       <h3>Is CCSwitcherX an official Anthropic tool?</h3>

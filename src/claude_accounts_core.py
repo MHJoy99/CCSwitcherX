@@ -27,7 +27,7 @@ from ctypes import wintypes
 from datetime import datetime
 from pathlib import Path
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 APP_DIR = Path(__file__).resolve().parent
 HOME = Path(os.environ.get("USERPROFILE") or Path.home())
@@ -424,6 +424,11 @@ def switch_to(pid: str) -> dict:
     # Everything from reading the live login to writing the new one happens under Claude Code's locks,
     # so a token refresh can't slip in between "save the old tokens" and "write the new ones".
     with claude_locks():
+        # Read the target again under the locks: a usage refresh may have just renewed (rotated) its tokens,
+        # and the copy read above would then hold a refresh token the server has already retired.
+        target = get_profile(pid)
+        if not target:
+            raise SwitchError("That account is no longer saved.")
         live = read_live()
         if live:
             if profile_id(live["oauthAccount"]) == pid:
@@ -465,7 +470,11 @@ def settle_check(pid: str) -> bool:
         now = read_live()
         if now and account_key(now["oauthAccount"]) == account_key(target["oauthAccount"]):
             return True
-        apply_login(target["claudeAiOauth"], target["oauthAccount"])
+        with claude_locks():  # fresh copy under the locks, in case a usage refresh rotated its tokens meanwhile
+            target = get_profile(pid)
+            if not target:
+                return False
+            apply_login(target["claudeAiOauth"], target["oauthAccount"])
     time.sleep(1.2)
     now = read_live()
     return bool(now and account_key(now["oauthAccount"]) == account_key(target["oauthAccount"]))
@@ -496,9 +505,11 @@ def restore_live(live):
 # --------------------------------------------------------------------------- usage (read-only)
 # Same endpoint Claude Code and claude-swap use (GET /api/oauth/usage). Rules that keep it safe:
 #  - the active account's numbers come from Claude Code's own cache in .claude.json (no network at all);
-#  - another account is only queried while its saved access token is still valid. We never refresh a saved
-#    account's token just to read usage, because that rotates its refresh token;
-#  - otherwise the last known numbers are shown with an "as of" age;
+#  - another account's saved access token is used while it is valid. Once it has expired we renew it the way
+#    Claude Code does (POST /v1/oauth/token, refresh_token grant) and save the rotated tokens straight back
+#    into that saved account, under Claude Code's locks so a switch can never read a half-rotated copy;
+#  - the live account's tokens belong to Claude Code: we never renew those ourselves;
+#  - when nothing can be read, the last known numbers are shown with an "as of" age;
 #  - at most one request per account every few minutes, with backoff after an error or rate limit.
 USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
 OAUTH_BETA = "oauth-2025-04-20"
@@ -507,6 +518,117 @@ USAGE_MIN_GAP_S = 180
 USAGE_BACKOFF_S = 600
 USAGE_LIVE_S = 15 * 60              # younger than this is "current"; older gets an "as of" note
 CLAUDE_CACHE_MAX_AGE_S = 10 * 60
+# Claude Code's OAuth client (read from the claude.exe installed on this machine, v2.1.296)
+TOKEN_URL = "https://platform.claude.com/v1/oauth/token"
+CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
+RENEW_DEAD_BACKOFF_S = 6 * 3600     # the server refused the saved sign-in: don't keep asking
+
+
+class SignInRejected(Exception):
+    """The server refused a saved account's refresh token (signed out elsewhere or revoked)."""
+
+
+def _post_token(body: dict) -> dict:
+    if os.environ.get("CA_NO_NETWORK"):
+        raise OSError("network disabled")
+    req = urllib.request.Request(TOKEN_URL, data=json.dumps(body).encode("utf-8"), method="POST", headers={
+        "Content-Type": "application/json", "User-Agent": "claude-accounts/1.0"})
+    with urllib.request.urlopen(req, timeout=8) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def _token_fresh(oauth, now):
+    return bool(oauth.get("accessToken")) and (oauth.get("expiresAt") or 0) >= (now + 60) * 1000
+
+
+def renew_saved_token(pid: str):
+    """Give a saved (not live) account a working access token. Returns its oauth dict, or None to skip.
+
+    Raises SignInRejected when the server refuses the refresh token. Network errors propagate.
+    """
+    with claude_locks():  # switch_to holds these too, so it never copies tokens we are rotating
+        live = read_live()
+        if live and profile_id(live["oauthAccount"]) == pid:
+            return None  # became the live account: Claude Code owns its tokens now
+        prof = get_profile(pid)
+        if not prof:
+            return None
+        oauth = prof["claudeAiOauth"]
+        now = time.time()
+        if _token_fresh(oauth, now):
+            return oauth  # someone renewed it while we waited for the lock
+        if not oauth.get("refreshToken") or refresh_expired(oauth):
+            return None
+        body = {"grant_type": "refresh_token", "refresh_token": oauth["refreshToken"], "client_id": CLIENT_ID}
+        if oauth.get("scopes"):
+            body["scope"] = " ".join(oauth["scopes"])
+        try:
+            data = _post_token(body)
+        except urllib.error.HTTPError as exc:
+            if exc.code in (400, 401):
+                raise SignInRejected(f"http-{exc.code}") from exc
+            raise
+        if not isinstance(data, dict) or not data.get("access_token") or not data.get("expires_in"):
+            raise ValueError("odd token response")
+        new = dict(oauth)
+        new["accessToken"] = data["access_token"]
+        new["refreshToken"] = data.get("refresh_token") or oauth["refreshToken"]
+        new["expiresAt"] = int((now + float(data["expires_in"])) * 1000)
+        if data.get("refresh_token_expires_in"):
+            new["refreshTokenExpiresAt"] = int((now + float(data["refresh_token_expires_in"])) * 1000)
+        if isinstance(data.get("scope"), str) and data["scope"].strip():
+            new["scopes"] = data["scope"].split()
+        # The old refresh token is already spent: save the new one before anything else can fail.
+        entry = {k: v for k, v in prof.items() if k != "id"}
+        entry["claudeAiOauth"] = new
+        entry["updatedAt"] = datetime.now().isoformat()
+        _write_bytes(PROFILES / f"{pid}.dat", _encode(entry))
+        return new
+
+
+PROFILE_URL = "https://api.anthropic.com/api/oauth/profile"
+PLAN_CHECK_S = 30 * 60
+
+
+def _fetch_profile(access_token: str) -> dict:
+    if os.environ.get("CA_NO_NETWORK"):
+        raise OSError("network disabled")
+    req = urllib.request.Request(PROFILE_URL, headers={
+        "Authorization": f"Bearer {access_token}", "anthropic-beta": OAUTH_BETA, "User-Agent": "claude-accounts/1.0"})
+    with urllib.request.urlopen(req, timeout=8) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def update_saved_plan(pid: str, profile: dict) -> bool:
+    """Copy the current plan from /api/oauth/profile into a saved (not live) account. True if it changed."""
+    org = (profile or {}).get("organization") or {}
+    kind, tier = org.get("organization_type"), org.get("rate_limit_tier")
+    if not isinstance(kind, str) or not kind:
+        return False
+    with claude_locks():  # same reason as renew_saved_token: a switch must never read a half-written copy
+        live = read_live()
+        if live and profile_id(live["oauthAccount"]) == pid:
+            return False  # Claude Code keeps the live account's details itself
+        prof = get_profile(pid)
+        if not prof:
+            return False
+        acct, oauth = dict(prof["oauthAccount"]), dict(prof["claudeAiOauth"])
+        acct["organizationType"] = kind
+        if tier:
+            acct["organizationRateLimitTier"] = tier
+            oauth["rateLimitTier"] = tier
+        if org.get("billing_type"):
+            acct["billingType"] = org["billing_type"]
+        sub = kind.replace("claude_", "")
+        if sub in ("pro", "max", "team", "enterprise"):
+            oauth["subscriptionType"] = sub
+        if acct == prof["oauthAccount"] and oauth == prof["claudeAiOauth"]:
+            return False
+        entry = {k: v for k, v in prof.items() if k != "id"}
+        entry["oauthAccount"], entry["claudeAiOauth"] = acct, oauth
+        entry["updatedAt"] = datetime.now().isoformat()
+        _write_bytes(PROFILES / f"{pid}.dat", _encode(entry))
+        return True
 
 
 def _fetch_usage(access_token: str) -> dict:
@@ -591,15 +713,32 @@ def refresh_usage(force=False):
         if not force and now - entry.get("fetchedAt", 0) < USAGE_MIN_GAP_S:
             report[pid] = "recent"
             continue
-        if not oauth.get("accessToken") or (oauth.get("expiresAt") or 0) < (now + 60) * 1000:
-            report[pid] = "token-expired"  # not an error: we just don't touch the token
-            continue
         try:
+            if not _token_fresh(oauth, now):
+                if pid == live_id:
+                    report[pid] = "token-expired"  # Claude Code renews the live login itself; never race it
+                    continue
+                oauth = renew_saved_token(pid)
+                if not oauth:
+                    report[pid] = "token-expired"
+                    continue
             parsed = parse_usage(_fetch_usage(oauth["accessToken"]))
             if not parsed:
                 raise ValueError("no usage in response")
-            data[pid] = {**parsed, "fetchedAt": now, "source": "api"}
+            data[pid] = {**parsed, "fetchedAt": now, "source": "api", "planAt": entry.get("planAt", 0)}
             report[pid] = "fetched"
+            if pid != live_id and (force or now - entry.get("planAt", 0) > PLAN_CHECK_S):
+                try:  # an upgrade (Pro -> Max) or downgrade shows up without signing in again
+                    update_saved_plan(pid, _fetch_profile(oauth["accessToken"]))
+                    data[pid]["planAt"] = now
+                except Exception:
+                    pass  # the plan label is cosmetic; usage above is already stored
+        except SignInRejected:
+            entry["retryAt"], entry["error"] = now + RENEW_DEAD_BACKOFF_S, "signin-rejected"
+            data[pid] = entry
+            report[pid] = "signin-rejected"
+        except SwitchError:  # Claude Code held its locks too long; just try again next round
+            report[pid] = "busy"
         except urllib.error.HTTPError as exc:
             wait = USAGE_BACKOFF_S
             try:
@@ -666,6 +805,7 @@ def usage_view(entry, now=None):
     models = [{"name": m["name"], "pct": int(round(m["pct"]))} for m in entry.get("models") or [] if m.get("pct")]
     parts += [f"{m['name']} {m['pct']}%" for m in models]
     return {"session": session, "week": week, "models": models, "ageS": int(age), "stale": age > USAGE_LIVE_S,
+            "signInRejected": entry.get("error") == "signin-rejected",
             "text": " · ".join(parts), "resets": " · ".join(resets),
             "note": f"as of {fmt_ago(age)}" if age > USAGE_LIVE_S else ""}
 
@@ -691,6 +831,7 @@ def state() -> dict:
                       "detail": info["detail"], "team": info["team"], "active": p["id"] == live_id,
                       "expired": refresh_expired(p["claudeAiOauth"]),
                       "daysLeft": refresh_days_left(p["claudeAiOauth"]),
+                      "signInRejected": (stored.get(p["id"]) or {}).get("error") == "signin-rejected",
                       "usage": usage_view(stored.get(p["id"]))})
     unsaved = None
     if live and live_id not in saved_ids:

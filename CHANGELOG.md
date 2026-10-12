@@ -2,6 +2,24 @@
 
 All notable changes to CCSwitcherX. Dates are in ISO format.
 
+## 1.3.0 (2026-10-13)
+
+- **A redesigned window.** The account in use gets a large panel with its session and weekly usage in big numbers,
+  reset times and model limits. Every other account is a compact row sorted by how much room it has left, with a clear
+  status: "Room left", "Full until 1:00 AM", "Session fresh" or "Sign in again". Rows keep a fixed column grid, long
+  names end in "…", numbers older than 15 minutes are dimmed and labelled with their age, and both light and dark
+  themes were redone.
+- **Live usage for accounts you are not using.** When a saved account's short-lived access token has expired, the app
+  renews it the way Claude Code does and saves the new tokens back into that saved account, so its numbers are current
+  instead of hours old. The account in use is left to Claude Code. If the server refuses a saved sign-in, the account
+  shows "Sign in again".
+- **Plan changes show up by themselves.** An upgrade (for example Pro to Max 5x) appears on the card after the next
+  usage refresh, without signing in again.
+- **Safer switching.** Switching now reads the saved account under Claude Code's locks, so a switch that happens while
+  the app is renewing that same account always uses the newest sign-in. A new end-to-end test with a fake token server
+  checks this, along with rotation, fast repeated switching and switching back.
+- The VS Code extension also says "Sign in again" when a saved sign-in was refused.
+
 ## 1.2.0 (2026-10-12)
 
 - **Switching back to a Claude account keeps old chats working.** Chats that ran on a provider's model carried fields Anthropic's API rejects (`tool_use.signature: Extra inputs are not permitted`, `Invalid signature in thinking block`). Every switch to an account (and `provider off`) now repairs those chats first: only blocks written by non-Claude models are touched, originals are kept in `transcript-backups/`, and a repair problem never blocks the switch.

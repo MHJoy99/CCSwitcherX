@@ -129,8 +129,8 @@ Everything else in `settings.json` is left exactly as it was, and switching back
 ## Safety and privacy
 
 - Saved logins are encrypted with Windows DPAPI: only your Windows user on that PC can read them.
-- No server, no telemetry. The only network use is Claude Code's own browser sign-in, a read-only usage request made
-  with your own token, and, only when you press **Test connection**, a few small requests to the provider address you entered.
+- No server, no telemetry. The only network use is Claude Code's own browser sign-in, read-only usage requests and, for a saved
+  account whose access token has expired, one token renewal request (each made with your own token), and, only when you press **Test connection**, a few small requests to the provider address you entered.
 - Provider API keys are encrypted the same way as saved logins, are never written to `settings.json`, and are refused on
   the command line (they come from an environment variable or standard input). Before every change a backup of
   `settings.json` is taken (encrypted), the result is verified and a failed write is rolled back.
@@ -147,10 +147,11 @@ Everything else in `settings.json` is left exactly as it was, and switching back
   Code to non-Claude models, so tool use and thinking depend on the model and the gateway; use **Test connection**.
 - While a provider is in use your Claude plan limits and usage bars do not apply, and Claude Code's own cost figures are
   only meaningful for Claude models. Switching model in the middle of a chat makes the new model re-read the whole chat once.
-- A saved login stays valid for about 28 days from its last refresh. An account you never use expires; the window warns
+- A saved login stays valid for about 28 days from its last refresh. An account you never use expires (reading its usage renews it); the window warns
   you 7 days ahead.
-- Usage for an account you are not using is live only while its saved sign-in is fresh (about 8 hours after you last
-  used it); after that you see the last known numbers marked "as of".
+- Accounts not in use are read live too: when a saved account's short-lived access token has expired, the app renews it
+  exactly like Claude Code does and saves the new tokens back into that saved account. The account in use is left to
+  Claude Code. If the server refuses a saved sign-in, the card says to sign in again.
 
 ## FAQ
 

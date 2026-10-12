@@ -503,7 +503,7 @@ async function showPicker() {
   }
   for (const p of state.profiles) {
     let detail = usageLine(p) || undefined;
-    if (p.expired) detail = '$(error) Sign-in expired. Use "Add account…" to sign in again.';
+    if (p.expired || p.signInRejected) detail = '$(error) Sign-in expired. Use "Add account…" to sign in again.';
     else if (!inUse(p) && p.daysLeft !== null && p.daysLeft < 7) {
       const warn = `$(warning) Saved sign-in expires in ${Math.max(0, Math.floor(p.daysLeft))} day(s). Use it before then.`;
       detail = p.usage ? `${warn}   ${p.usage.text}` : warn;

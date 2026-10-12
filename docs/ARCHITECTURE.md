@@ -21,7 +21,7 @@ flowchart LR
   CLI --> CORE
   CORE -->|"read and write, under Claude Code's locks"| CC["~/.claude/.credentials.json<br/>~/.claude.json"]
   CORE -->|"DPAPI-encrypted .dat files"| STORE["~/.claude-accounts/profiles and backups"]
-  CORE -->|"read-only GET, saved token still valid"| API["api.anthropic.com/api/oauth/usage"]
+  CORE -->|"read-only GET; expired saved token renewed first"| API["api.anthropic.com/api/oauth/usage"]
   CORE -->|"claude auth login / auth status"| CLAUDE["claude command"]
 ```
 
@@ -190,7 +190,7 @@ Usage is the 5-hour **Session** window (`five_hour`) and the 7-day **Week** wind
 
 These are in `claude_accounts_core.py: refresh_usage`:
 
-- **Never refresh a saved login to read usage.** If the access token is missing or expires within 60 s, the account is reported as `token-expired` and left alone. Refreshing would rotate its refresh token.
+- **Renew a saved login only to read its usage, never the live one.** If a saved account's access token is missing or expires within 60 s, `renew_saved_token` posts a `refresh_token` grant to `TOKEN_URL` and saves the rotated tokens into that profile under Claude Code's locks. A saved account whose refresh token has expired is reported as `token-expired` without a call. The live account is reported as `token-expired` and left to Claude Code. A 400 or 401 from the token endpoint is stored as `signin-rejected` with a 6 h backoff (`RENEW_DEAD_BACKOFF_S`); other errors use the normal backoff.
 - **Minimum gap.** One request per account every `USAGE_MIN_GAP_S = 180` s. `usage --force` (and the window's Refresh usage button) skips this gap only.
 - **Backoff.** After any error, `retryAt` is set `USAGE_BACKOFF_S = 600` s ahead. For HTTP 429, the wait is the larger of 600 s and the `Retry-After` header. Backoff is checked before `force`, so `force` does not bypass it.
 - **No network in tests.** When `CA_NO_NETWORK` is set, `_fetch_usage` raises at once, which counts as an error and starts a backoff.
@@ -351,7 +351,7 @@ If Node.js is not installed, `test.ps1` skips the extension tests and says so.
 - **Same Windows user only.** A process running as the same user can decrypt saved logins (see [SECURITY.md](../SECURITY.md)).
 - **Expired saved sign-ins are refused.** The switch fails with a message, and the account's card is greyed out. Signing in again is the only fix.
 - **A refused switch still autosaves.** The order in `switch_to` means the outgoing login is saved and backed up before the expiry check.
-- **Accounts you have not used in a while have old usage numbers.** Their access token has expired, so the engine does not read them. The numbers say "as of ...".
+- **Accounts not in use are read live too.** An expired saved access token is renewed when usage is read, so the numbers are current. If the sign-in is refused or the network is down, the numbers say "as of ...".
 - **`recover()` does not retry a failed re-apply** (see [Journal and recover](#journal-and-recover)).
 - **The rollback in `apply_login` can itself fail**, leaving the two files out of step until you switch again.
 - **`reverted` is never set** in the result of `switch_to`.

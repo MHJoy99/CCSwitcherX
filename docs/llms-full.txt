@@ -55,15 +55,15 @@ SAFETY MODEL
 - An expired saved login is refused with a clear message.
 - Cancelling "Add account" restores the previous login.
 - It never runs a logout first.
-- No server and no telemetry. The network is used only for Claude Code's own browser sign-in and for the read-only usage request described below.
+- No server and no telemetry. The network is used only for Claude Code's own browser sign-in, the read-only usage request and, for a saved account with an expired access token, its token renewal request, all described below.
 - The doctor self-check confirms that login files are found, encryption works, the claude command is on PATH, and Claude Code still uses the lock names the tool relies on. The VS Code extension runs the check quietly at startup and warns if something changed.
 
 USAGE DISPLAY RULES
 
 - The window and status bar show the 5-hour Session percentage and the 7-day Week percentage, with reset times.
 - Active account: the numbers come from Claude Code's own cache. There is no network request.
-- Other accounts: a read-only request to api.anthropic.com/api/oauth/usage is sent only while that account's saved access token is valid (about 8 hours). The tool never refreshes a saved login just to read usage.
-- Otherwise the last known numbers are shown and labelled with their age, for example "as of 3 h ago".
+- Other accounts: a read-only request to api.anthropic.com/api/oauth/usage is sent with that account's access token. When the saved access token has expired, the tool first renews it the way Claude Code does (a refresh_token request to platform.claude.com/v1/oauth/token) and saves the rotated tokens back into that saved account. The account in use is never renewed here; Claude Code owns its tokens.
+- If the server refuses a saved sign-in, the account is flagged for signing in again and not asked again for 6 hours. Otherwise the last known numbers are shown and labelled with their age, for example "as of 3 h ago".
 - Bar colours: green below 70%, amber from 70% to 89%, red from 90%.
 - A window whose reset time has passed shows "reset".
 - A saved login lasts about 28 days from its last refresh. The window warns when one has under 7 days left.
@@ -123,7 +123,7 @@ LIMITATIONS
 - Windows only. macOS and Linux are not supported yet.
 - Requires Python 3.9 or newer.
 - A saved login lasts about 28 days from its last refresh. Use each account at least once in that time.
-- Usage for an account that you have not used recently is its last known value, marked "as of". It is not live.
+- Usage for an account not in use is read live too (see above). If a read fails, its last known value is shown, marked "as of".
 - Tested with real Max and Pro accounts. Team accounts use the same login format.
 - It does not manage API keys.
 - It does not change Claude Code settings, skills, memory or chat history.
@@ -146,7 +146,7 @@ Q: Does switching change my Claude Code settings, skills, memory or chat history
 A: No. Only the login is swapped: the claudeAiOauth entry in ~/.claude/.credentials.json and the oauthAccount entry in ~/.claude.json (plus one cached flag that Claude Code recreates by itself). Skills, CLAUDE.md, memory, MCP logins and chat history are shared by every account.
 
 Q: Can I see usage for each account?
-A: Yes. The window and the status bar show the 5-hour session and 7-day weekly usage with reset times. The active account's numbers come from Claude Code itself. Other accounts are read live while their saved sign-in is still fresh (about 8 hours after you last used them), otherwise you see the last known numbers marked "as of".
+A: Yes. The window and the status bar show the 5-hour session and 7-day weekly usage with reset times. The active account's numbers come from Claude Code itself. Accounts not in use are read live too: when a saved account's short-lived access token has expired, the app renews it exactly like Claude Code does and saves the new tokens back into that saved account. The account in use is left to Claude Code. If the server refuses a saved sign-in, the card says to sign in again.
 
 Q: Which platforms and versions does it support?
 A: Windows 10 and 11 with Python 3.9 or newer (tested on Python 3.11). It works with the Claude Code command line and the Claude Code VS Code extension. macOS and Linux are not supported yet because the encryption uses Windows DPAPI.

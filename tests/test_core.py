@@ -380,19 +380,241 @@ class CoreTests(unittest.TestCase):
         self.assertNotIn("at-t1", core.USAGE_FILE.read_text(encoding="utf-8"))
         self.assertNotIn("rt-t1", core.USAGE_FILE.read_text(encoding="utf-8"))
 
-    def test_expired_access_token_is_never_refreshed_and_last_known_is_kept(self):
+    def test_expired_access_token_offline_keeps_last_known(self):
         core.save_profile(core.read_live())
+        self._put_claude_cache("acc-1", self._payload())
         old = oauth("t1")
         old["expiresAt"] = int(time.time() * 1000) - 1000
         team = core.save_profile({"claudeAiOauth": old, "oauthAccount": acct(2, "claude_team")})
         core._store_usage(team["id"], {**core.parse_usage(self._payload(session=70)), "fetchedAt": time.time() - 7200, "source": "api"})
+        def offline(body):
+            raise OSError("offline")
+
+        calls, real_post = self._with_token_endpoint(offline)
         real, core._fetch_usage = core._fetch_usage, lambda t: self.fail("expired token must not be used")
+        try:
+            self.assertEqual(core.refresh_usage()[team["id"]], "OSError")  # renewal tried, network down, nothing used
+        finally:
+            core._fetch_usage, core._post_token = real, real_post
+        self.assertEqual(len(calls), 1)
+        view = next(p for p in core.state()["profiles"] if p["id"] == team["id"])["usage"]
+        self.assertEqual((view["session"]["pct"], view["stale"], view["note"]), (70, True, "as of 2 h ago"))
+
+    # ---- renewing a saved (not live) account's expired access token
+    def _expired_saved(self, tag="t1", refresh_days=20, scopes=("user:inference", "user:profile")):
+        core.save_profile(core.read_live())
+        self._put_claude_cache("acc-1", self._payload())  # the live account is read from Claude Code's cache
+        old = oauth(tag, days=refresh_days)
+        old["expiresAt"] = int(time.time() * 1000) - 1000
+        old["scopes"] = list(scopes)
+        return core.save_profile({"claudeAiOauth": old, "oauthAccount": acct(2, "claude_team")})
+
+    def _with_token_endpoint(self, fake):
+        calls = []
+
+        def post(body):
+            calls.append(body)
+            return fake(body)
+
+        real, core._post_token = core._post_token, post
+        return calls, real
+
+    def test_saved_expired_access_token_is_renewed_and_saved_back(self):
+        team = self._expired_saved()
+        now = time.time()
+        calls, real = self._with_token_endpoint(lambda b: {"access_token": "at-new", "refresh_token": "rt-new",
+                                                           "expires_in": 3600, "refresh_token_expires_in": 30 * 86400,
+                                                           "scope": "user:inference user:profile"})
+        seen = []
+        real_fetch, core._fetch_usage = core._fetch_usage, lambda tok: (seen.append(tok), self._payload(session=31))[1]
+        try:
+            report = core.refresh_usage()
+        finally:
+            core._post_token, core._fetch_usage = real, real_fetch
+        self.assertEqual(report[team["id"]], "fetched")
+        self.assertEqual(calls, [{"grant_type": "refresh_token", "refresh_token": "rt-t1",
+                                  "client_id": core.CLIENT_ID, "scope": "user:inference user:profile"}])
+        self.assertEqual(seen, ["at-new"])
+        saved = core.get_profile(team["id"])["claudeAiOauth"]
+        self.assertEqual((saved["accessToken"], saved["refreshToken"]), ("at-new", "rt-new"))
+        self.assertLess(abs(saved["expiresAt"] - (now + 3600) * 1000), 5000)
+        self.assertLess(abs(saved["refreshTokenExpiresAt"] - (now + 30 * 86400) * 1000), 5000)
+        self.assertEqual(core._read_usage_file()[team["id"]]["session"]["pct"], 31.0)
+
+    def test_renewal_without_a_new_refresh_token_keeps_the_old_one(self):
+        team = self._expired_saved()
+        calls, real = self._with_token_endpoint(lambda b: {"access_token": "at-new", "expires_in": 3600})
+        real_fetch, core._fetch_usage = core._fetch_usage, lambda tok: self._payload()
+        try:
+            self.assertEqual(core.refresh_usage()[team["id"]], "fetched")
+        finally:
+            core._post_token, core._fetch_usage = real, real_fetch
+        self.assertEqual(len(calls), 1)
+        saved = core.get_profile(team["id"])["claudeAiOauth"]
+        self.assertEqual((saved["accessToken"], saved["refreshToken"]), ("at-new", "rt-t1"))
+
+    def test_live_account_with_expired_token_is_left_to_claude_code(self):
+        personal = core.save_profile(core.read_live())
+        creds = json.loads(core.CREDS.read_text(encoding="utf-8"))
+        creds["claudeAiOauth"]["expiresAt"] = int(time.time() * 1000) - 1000
+        core.CREDS.write_text(json.dumps(creds))
+        calls, real = self._with_token_endpoint(lambda b: self.fail("live token must not be renewed"))
+        real_fetch, core._fetch_usage = core._fetch_usage, lambda t: self.fail("expired token must not be used")
+        try:
+            self.assertEqual(core.refresh_usage(force=True)[personal["id"]], "token-expired")
+        finally:
+            core._post_token, core._fetch_usage = real, real_fetch
+        self.assertEqual(calls, [])
+        self.assertEqual(json.loads(core.CREDS.read_text(encoding="utf-8"))["claudeAiOauth"]["refreshToken"], "rt-p1")
+
+    def test_refused_sign_in_is_flagged_and_backs_off_for_six_hours(self):
+        team = self._expired_saved()
+        before = core.get_profile(team["id"])["claudeAiOauth"]
+        core._store_usage(team["id"], {**core.parse_usage(self._payload(session=70)),
+                                       "fetchedAt": time.time() - 7200, "source": "api"})
+
+        def refused(body):
+            raise urllib.error.HTTPError("u", 400, "invalid_grant", {}, None)
+
+        calls, real = self._with_token_endpoint(refused)
+        real_fetch, core._fetch_usage = core._fetch_usage, lambda t: self.fail("refused sign-in must not fetch")
+        try:
+            now = time.time()
+            self.assertEqual(core.refresh_usage(force=True)[team["id"]], "signin-rejected")
+            entry = core._read_usage_file()[team["id"]]
+            self.assertEqual(entry["error"], "signin-rejected")
+            self.assertGreater(entry["retryAt"], now + 6 * 3600 - 5)
+            self.assertTrue(core.usage_view(entry)["signInRejected"])
+            self.assertEqual(core.refresh_usage(force=True)[team["id"]], "backoff")
+        finally:
+            core._post_token, core._fetch_usage = real, real_fetch
+        self.assertEqual(len(calls), 1)
+        after = core.get_profile(team["id"])["claudeAiOauth"]
+        self.assertEqual((after["accessToken"], after["refreshToken"]), (before["accessToken"], before["refreshToken"]))
+
+    def test_server_error_during_renewal_is_a_normal_backoff(self):
+        team = self._expired_saved()
+        before = core.get_profile(team["id"])["claudeAiOauth"]
+
+        def broken(body):
+            raise urllib.error.HTTPError("u", 500, "Server Error", {}, None)
+
+        calls, real = self._with_token_endpoint(broken)
+        try:
+            now = time.time()
+            self.assertEqual(core.refresh_usage()[team["id"]], "http-500")
+            entry = core._read_usage_file()[team["id"]]
+            self.assertLess(abs(entry["retryAt"] - (now + core.USAGE_BACKOFF_S)), 5)
+            self.assertNotEqual(entry.get("error"), "signin-rejected")
+        finally:
+            core._post_token = real
+        self.assertEqual(len(calls), 1)
+        after = core.get_profile(team["id"])["claudeAiOauth"]
+        self.assertEqual((after["accessToken"], after["refreshToken"]), (before["accessToken"], before["refreshToken"]))
+
+    def test_expired_refresh_token_is_not_renewed(self):
+        team = self._expired_saved(refresh_days=-2)
+        calls, real = self._with_token_endpoint(lambda b: self.fail("dead sign-in must not be sent to the server"))
+        real_fetch, core._fetch_usage = core._fetch_usage, lambda t: self.fail("expired token must not be used")
         try:
             self.assertEqual(core.refresh_usage()[team["id"]], "token-expired")
         finally:
-            core._fetch_usage = real
-        view = next(p for p in core.state()["profiles"] if p["id"] == team["id"])["usage"]
-        self.assertEqual((view["session"]["pct"], view["stale"], view["note"]), (70, True, "as of 2 h ago"))
+            core._post_token, core._fetch_usage = real, real_fetch
+        self.assertEqual(calls, [])
+
+    def test_valid_access_token_is_never_renewed(self):
+        core.save_profile(core.read_live())
+        self._put_claude_cache("acc-1", self._payload())
+        team = core.save_profile({"claudeAiOauth": oauth("t1"), "oauthAccount": acct(2, "claude_team")})
+        calls, real = self._with_token_endpoint(lambda b: self.fail("valid token must not be renewed"))
+        real_fetch, core._fetch_usage = core._fetch_usage, lambda t: self._payload()
+        try:
+            self.assertEqual(core.refresh_usage()[team["id"]], "fetched")
+        finally:
+            core._post_token, core._fetch_usage = real, real_fetch
+        self.assertEqual(calls, [])
+
+    # ---- plan re-check (/api/oauth/profile)
+    def _profile_reply(self, kind, tier):
+        return {"organization": {"organization_type": kind, "rate_limit_tier": tier}}
+
+    def _plan_of(self, pid):
+        return next(p for p in core.state()["profiles"] if p["id"] == pid)["plan"]
+
+    def test_saved_pro_account_shows_max_5x_after_a_forced_read(self):
+        core.save_profile(core.read_live())
+        self._put_claude_cache("acc-1", self._payload())
+        pro = core.save_profile({"claudeAiOauth": oauth("t1"), "oauthAccount": acct(2, "claude_pro")})
+        self.assertEqual(self._plan_of(pro["id"]), "Pro")
+        seen = []
+        real_fetch, core._fetch_usage = core._fetch_usage, lambda t: self._payload()
+        real_profile, core._fetch_profile = core._fetch_profile, lambda t: (seen.append(t), self._profile_reply(
+            "claude_max", "default_claude_max_5x"))[1]
+        try:
+            self.assertEqual(core.refresh_usage(force=True)[pro["id"]], "fetched")
+        finally:
+            core._fetch_usage, core._fetch_profile = real_fetch, real_profile
+        self.assertEqual(seen, ["at-t1"])
+        self.assertEqual(self._plan_of(pro["id"]), "Max 5x")
+
+    def test_live_account_plan_is_never_rewritten_from_the_profile(self):
+        personal = core.save_profile(core.read_live())  # live Max, no cache: read with its own valid token
+        self.assertEqual(self._plan_of(personal["id"]), "Max 5x")
+        real_fetch, core._fetch_usage = core._fetch_usage, lambda t: self._payload()
+        real_profile, core._fetch_profile = core._fetch_profile, lambda t: self.fail("live plan must not be re-checked")
+        try:
+            self.assertEqual(core.refresh_usage(force=True)[personal["id"]], "fetched")
+        finally:
+            core._fetch_usage, core._fetch_profile = real_fetch, real_profile
+        self.assertEqual(self._plan_of(personal["id"]), "Max 5x")
+
+        # a live account whose numbers come from Claude Code's cache is never asked either
+        self._put_claude_cache("acc-1", self._payload())
+        real_profile, core._fetch_profile = core._fetch_profile, lambda t: self.fail("live plan must not be re-checked")
+        try:
+            self.assertEqual(core.refresh_usage(force=True)[personal["id"]], "claude-cache")
+        finally:
+            core._fetch_profile = real_profile
+
+    def test_plan_is_not_rechecked_within_thirty_minutes(self):
+        core.save_profile(core.read_live())
+        self._put_claude_cache("acc-1", self._payload())
+        pro = core.save_profile({"claudeAiOauth": oauth("t1"), "oauthAccount": acct(2, "claude_pro")})
+        calls = []
+        real_fetch, core._fetch_usage = core._fetch_usage, lambda t: self._payload()
+        real_profile, core._fetch_profile = core._fetch_profile, lambda t: (calls.append(t), self._profile_reply(
+            "claude_pro", "default_claude_pro"))[1]
+        try:
+            self.assertEqual(core.refresh_usage(force=True)[pro["id"]], "fetched")
+            self.assertEqual(len(calls), 1)
+            # make the usage stale enough to be read again, but keep the plan check time
+            entry = core._read_usage_file()[pro["id"]]
+            core._store_usage(pro["id"], {**entry, "fetchedAt": time.time() - 3600})
+            self.assertEqual(core.refresh_usage()[pro["id"]], "fetched")
+        finally:
+            core._fetch_usage, core._fetch_profile = real_fetch, real_profile
+        self.assertEqual(len(calls), 1)  # not asked again inside PLAN_CHECK_S
+
+    def test_profile_failure_does_not_break_usage(self):
+        core.save_profile(core.read_live())
+        self._put_claude_cache("acc-1", self._payload())
+        pro = core.save_profile({"claudeAiOauth": oauth("t1"), "oauthAccount": acct(2, "claude_pro")})
+        real_fetch, core._fetch_usage = core._fetch_usage, lambda t: self._payload(session=45)
+        real_profile, core._fetch_profile = core._fetch_profile, lambda t: (_ for _ in ()).throw(OSError("offline"))
+        try:
+            self.assertEqual(core.refresh_usage(force=True)[pro["id"]], "fetched")
+        finally:
+            core._fetch_usage, core._fetch_profile = real_fetch, real_profile
+        self.assertEqual(core._read_usage_file()[pro["id"]]["session"]["pct"], 45.0)
+        self.assertEqual(self._plan_of(pro["id"]), "Pro")
+
+    def test_update_saved_plan_reports_no_change(self):
+        core.save_profile(core.read_live())
+        pro = core.save_profile({"claudeAiOauth": oauth("t1"), "oauthAccount": acct(2, "claude_pro")})
+        self.assertTrue(core.update_saved_plan(pro["id"], self._profile_reply("claude_max", "default_claude_max_5x")))
+        self.assertFalse(core.update_saved_plan(pro["id"], self._profile_reply("claude_max", "default_claude_max_5x")))
+        self.assertFalse(core.update_saved_plan(pro["id"], {}))  # no organization in the reply
+        self.assertEqual(self._plan_of(pro["id"]), "Max 5x")
 
     def test_rate_limit_backs_off(self):
         core.save_profile(core.read_live())
@@ -433,7 +655,8 @@ class CoreTests(unittest.TestCase):
 
 if __name__ == "__main__":
     try:
-        unittest.main(verbosity=2, exit=False)
+        outcome = unittest.main(verbosity=2, exit=False).result
     finally:
         import shutil
         shutil.rmtree(SANDBOX, ignore_errors=True)
+    sys.exit(0 if outcome.wasSuccessful() else 1)
