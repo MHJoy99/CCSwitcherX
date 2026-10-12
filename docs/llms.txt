@@ -1,6 +1,6 @@
 # CCSwitcherX
 
-> CCSwitcherX is a free, open-source (MIT) unofficial Windows tool that switches the Claude Code login between your own saved accounts, such as a personal Max plan and a work Team plan, in one click. It has a small window, a VS Code status-bar extension and a command-line tool. It needs only Python 3.9 or newer, with no pip packages. It is not affiliated with Anthropic.
+> CCSwitcherX is a free, open-source (MIT) unofficial Windows tool that switches the Claude Code login between your own saved accounts, such as a personal Max plan and a work Team plan, in one click. It has a small window, a VS Code status-bar extension and a command-line tool. Version 1.3.0 shows the account in use as a large panel and other accounts as compact rows sorted by room left, reads usage live for accounts not in use, and shows plan changes such as Pro to Max without signing in again. It needs only Python 3.9 or newer, with no pip packages. It is not affiliated with Anthropic.
 
 ## Docs
 

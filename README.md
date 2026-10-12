@@ -26,6 +26,20 @@ or from the VS Code status bar. Windows, free, open source.
 
 ---
 
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/app-window-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/app-window-light.png">
+  <img src="docs/assets/app-window-light.png" alt="The CCSwitcherX window (version 1.3.0) with fictional accounts: the account in use in a large panel with session and week usage, compact rows for other accounts sorted by room left, and saved providers." width="360">
+</picture>
+
+<sub>Version 1.3.0, fictional accounts. The window follows your Windows light or dark setting.</sub>
+
+</div>
+
+---
+
 ## What is CCSwitcherX?
 
 **CCSwitcherX is a free, open-source Windows tool that switches the Claude Code login between your own saved
@@ -54,13 +68,21 @@ not affiliated with Anthropic. Claude and Claude Code are trademarks of Anthropi
 </table>
 
 - **One-click switch.** A swap of two entries in Claude Code's login files measured 21 to 27 ms on a real machine.
+- **A redesigned window (1.3.0).** The account in use gets a large panel with session and week usage in big numbers,
+  reset times and model limits. Every other account is a compact row sorted by how much room it has left, with a clear
+  status: Room left, Full until a time, Session fresh or Sign in again.
 - **Usage for every account.** The 5-hour session and 7-day weekly percentages with reset times, per account.
+  Accounts you are not using are read live too: an expired access token is renewed the way Claude Code does, so their
+  numbers are current instead of hours old.
+- **Plan changes show up.** An upgrade such as Pro to Max 5x appears after the next usage refresh, without signing in
+  again.
 - **VS Code status bar.** `Personal · 64%` in the corner; click it to switch, add, rename or remove accounts.
 - **Providers (other models).** Save a gateway once (address, key, which model answers for Opus, Sonnet, Haiku and
   subagents), then switch to it like an account. A built-in test checks every model, including a tool call followed by
   a second step, which is where gateways most often break.
 - **Safe by design.** Logins are encrypted with Windows DPAPI, the current login is backed up before every switch,
-  an interrupted switch is finished on the next start, and a failed write is rolled back.
+  an interrupted switch is finished on the next start, and a failed write is rolled back. A switch re-reads the saved
+  account under Claude Code's locks, so switching while the app renews that same account always uses the newest sign-in.
 - **Your setup stays the same.** Skills, `CLAUDE.md`, memory, MCP logins and chat history are shared by every account.
 - **Self-check.** `doctor` verifies the login files, the encryption, the `claude` command and that Claude Code still
   uses the lock files this tool relies on.
@@ -88,7 +110,9 @@ update is safe. No VS Code or Node.js? Use `-SkipExtension`. Remove everything w
    give it a name. Your previous login is saved automatically first, and cancelling puts it back.
 2. **Switch.** Click **Switch** on another card, or click the account name in VS Code's status bar and pick it.
    Open Claude Code chats pick up the new account on their next message; if one does not, start a new chat.
-3. **Watch usage.** Each card shows Session and Week bars with reset times (green below 70%, amber to 89%, red from 90%).
+3. **Watch usage.** The account in use is a large panel with Session and Week in big numbers and reset times; the other
+   accounts are rows sorted by room left. Bars are green below 70%, amber to 89%, red from 90%; numbers older than 15
+   minutes are dimmed and labelled with their age.
 4. **Use another model (optional).** Click **Add provider**, enter a name, the gateway address (for example
    `https://gpt.bdx.market`), its API key and the model names it uses for Opus, Sonnet, Haiku and subagents, press
    **Test connection**, then **Save**. Click **Switch** on the provider card to use it, or on an account card to go back.
@@ -130,7 +154,7 @@ Everything else in `settings.json` is left exactly as it was, and switching back
 
 - Saved logins are encrypted with Windows DPAPI: only your Windows user on that PC can read them.
 - No server, no telemetry. The only network use is Claude Code's own browser sign-in, read-only usage requests and, for a saved
-  account whose access token has expired, one token renewal request (each made with your own token), and, only when you press **Test connection**, a few small requests to the provider address you entered.
+  account whose access token has expired, one token renewal request, plus a read-only plan check (each made with your own token), and, only when you press **Test connection**, a few small requests to the provider address you entered.
 - Provider API keys are encrypted the same way as saved logins, are never written to `settings.json`, and are refused on
   the command line (they come from an environment variable or standard input). Before every change a backup of
   `settings.json` is taken (encrypted), the result is verified and a failed write is rolled back.
@@ -162,6 +186,15 @@ encrypted on your PC and puts the right one back when you switch.
 
 **Is it an official Anthropic tool?** No. It is independent and unofficial; check Anthropic's terms for your plan.
 
+**Is this allowed by Anthropic?** CCSwitcherX is unofficial and not affiliated with Anthropic. It only switches between
+your own accounts on your own computer, and your prompts are still sent by the real Claude Code, not by CCSwitcherX.
+Anthropic's Consumer Terms do not allow you to share your login or make your account available to anyone else, so do
+not use it for shared accounts. To show usage and plan, the app reads them from Anthropic's servers with the saved
+sign-in and renews expired access tokens the way Claude Code does. Use it at your own risk.
+
+**Does it show usage for accounts I'm not using?** Yes, live: see [docs/FAQ.md](docs/FAQ.md) for how the renewal works,
+what happens when a sign-in is refused, and how plan upgrades and switching during a refresh are handled.
+
 More answers in [docs/FAQ.md](docs/FAQ.md) and on the [website](https://mhjoy99.github.io/CCSwitcherX/#faq).
 
 ## How it compares
@@ -179,7 +212,7 @@ record which account was used.
 ## Develop
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\test.ps1          # 52 engine tests + 16 window tests + 45 extension checks, fake accounts, nothing shown on screen
+powershell -ExecutionPolicy Bypass -File scripts\test.ps1          # 74 engine tests + a 9-step switch scenario + 16 window tests + 45 extension checks, fake accounts, nothing shown on screen
 powershell -ExecutionPolicy Bypass -File scripts\build-vsix.ps1    # builds dist/claude-accounts-<version>.vsix
 python -I scripts/check-svg.py docs/assets
 python -I scripts/check-site.py

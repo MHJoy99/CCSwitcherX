@@ -42,7 +42,8 @@
   "name": "CCSwitcherX",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "Windows 10, Windows 11",
-  "softwareVersion": "1.1.0",
+  "softwareVersion": "1.3.0",
+  "dateModified": "2026-10-13",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "license": "https://opensource.org/licenses/MIT",
   "isAccessibleForFree": true,
@@ -50,13 +51,19 @@
   "url": "https://mhjoy99.github.io/CCSwitcherX/",
   "downloadUrl": "https://github.com/MHJoy99/CCSwitcherX/releases/latest",
   "codeRepository": "https://github.com/MHJoy99/CCSwitcherX",
-  "screenshot": "https://mhjoy99.github.io/CCSwitcherX/og-image.png",
+  "screenshot": [
+    "https://mhjoy99.github.io/CCSwitcherX/assets/app-window-light.png",
+    "https://mhjoy99.github.io/CCSwitcherX/assets/app-window-dark.png"
+  ],
   "featureList": [
     "Switch the Claude Code login between saved accounts in one click",
     "Windows window and VS Code status-bar extension",
     "Saved logins encrypted with Windows DPAPI",
     "Backup before every switch and rollback on a failed write",
-    "Session and week usage per account with reset times",
+    "Account in use shown as a large panel; other accounts as compact rows sorted by room left",
+    "Session and week usage per account with reset times, read live for accounts not in use",
+    "Plan changes such as Pro to Max 5x show up without signing in again",
+    "Switching re-reads the saved account under Claude Code's lock files",
     "Command line tool with list, status, switch, usage, add, save, rename, remove, doctor and --json",
     "Self-check that verifies login files, encryption and Claude Code lock names"
   ],
@@ -115,6 +122,38 @@
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "Yes. The window and the status bar show the 5-hour session and 7-day weekly usage with reset times. The active account's numbers come from Claude Code itself. Accounts not in use are read live too: when a saved account's short-lived access token has expired, the app renews it exactly like Claude Code does and saves the new tokens back into that saved account. The account in use is left to Claude Code. If the server refuses a saved sign-in, the card says to sign in again."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it show usage for accounts I'm not using?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Accounts you are not using are read live: when a saved account's short-lived access token has expired, the app renews it the way Claude Code does and saves the new tokens back into that saved account, so its numbers are current instead of hours old. The account in use is left to Claude Code. If the server refuses a saved sign-in, that account shows Sign in again, and numbers older than 15 minutes are dimmed and labelled with their age."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Will a plan upgrade, such as Pro to Max, show up?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, for accounts you are not using. When usage is refreshed (at most every 30 minutes per account), the app also re-checks the account's plan with its saved sign-in, so an upgrade such as Pro to Max 5x appears on its row without signing in again. The account in use keeps the plan details Claude Code itself maintains."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is it safe to switch while it is refreshing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. A switch re-reads the saved account under Claude Code's own lock files, so if the app was renewing that same account a moment earlier, the switch uses the newest saved sign-in and never one that was already replaced. An end-to-end test with a fake token server covers renewal, token rotation, a switch during a slow renewal, ten fast switches and switching back."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is this allowed by Anthropic?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "CCSwitcherX is unofficial and not affiliated with Anthropic. It only switches between your own accounts on your own computer, and your prompts are still sent by the real Claude Code, not by CCSwitcherX. Anthropic's Consumer Terms do not allow you to share your login or make your account available to anyone else, so do not use it for shared accounts. To show usage and plan, the app reads them from Anthropic's servers with the saved sign-in and renews expired access tokens the way Claude Code does. Use it at your own risk and check Anthropic's terms for your plan."
       }
     },
     {
@@ -230,6 +269,7 @@
     <a class="brand" href="#top" aria-label="CCSwitcherX home"><img src="assets/logo.svg" width="30" height="30" alt="CCSwitcherX logo">CCSwitcherX</a>
     <nav class="nav" aria-label="Main">
       <a href="#features">Features</a>
+      <a href="#window">Window</a>
       <a href="#how-it-works">How it works</a>
       <a href="demo/">Demo</a>
       <a href="#install">Install</a>
@@ -286,7 +326,7 @@
         <img src="assets/feature-usage.svg" width="480" height="300" alt="Session and week usage bars for each saved account with reset times" loading="lazy" decoding="async">
         <figcaption>
           <h3>Usage for every account</h3>
-          <p>The 5-hour Session and 7-day Week percentages, with reset times, for each saved login.</p>
+          <p>The 5-hour Session and 7-day Week percentages, with reset times, for each saved login. Accounts you are not using are read live too.</p>
         </figcaption>
       </figure>
       <figure class="card">
@@ -304,6 +344,29 @@
         </figcaption>
       </figure>
     </div>
+  </div>
+</section>
+
+<section id="window" aria-labelledby="window-title">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="window-title">The window, new in 1.3.0</h2>
+      <p>The account in use gets a large panel. Every other account is a compact row, sorted by how much room it has left.</p>
+    </div>
+    <div class="win">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="assets/app-window-dark.png">
+        <img src="assets/app-window-light.png" width="500" height="938" alt="The CCSwitcherX window in version 1.3.0 with fictional accounts: the account in use in a large panel with session and week usage, compact rows for other accounts sorted by room left, and saved providers." loading="lazy" decoding="async">
+      </picture>
+      <ul class="win-list">
+        <li><strong>Account in use</strong>Session and week usage in big numbers, reset times and model limits, in one panel.</li>
+        <li><strong>Rows sorted by room left</strong>Each other account shows a clear status: Room left, Full until a time, Session fresh or Sign in again. Names that are too long end in an ellipsis, and numbers older than 15 minutes are dimmed and labelled with their age.</li>
+        <li><strong>Live usage for accounts not in use</strong>An expired access token is renewed the way Claude Code does and saved back into that saved account, so its numbers are current instead of hours old. The account in use is left to Claude Code.</li>
+        <li><strong>Plan changes show up</strong>An upgrade such as Pro to Max 5x appears after the next usage refresh, without signing in again.</li>
+        <li><strong>Safer switching</strong>A switch re-reads the saved account under Claude Code's lock files, so it never applies a sign-in that a renewal has just replaced.</li>
+      </ul>
+    </div>
+    <p class="win-note">Fictional accounts, shown in the system light or dark theme.</p>
   </div>
 </section>
 
@@ -401,7 +464,7 @@
     </div>
     <ul class="priv">
       <li><strong>Encrypted logins</strong><span>Saved logins are encrypted with Windows DPAPI and can be read only by the current Windows user.</span></li>
-      <li><strong>No server, no telemetry</strong><span>The only network calls are Claude Code's own browser sign-in, a read-only usage request and, for a saved account with an expired token, a token renewal, all made with your own tokens.</span></li>
+      <li><strong>No server, no telemetry</strong><span>The only network calls are Claude Code's own browser sign-in, read-only usage and plan requests and, for a saved account with an expired token, a token renewal, all made with your own tokens.</span></li>
       <li><strong>Backup and rollback</strong><span>Each switch backs up the current login, keeps a recovery journal, and rolls back if a file write fails.</span></li>
       <li><strong>Only the login changes</strong><span>Skills, CLAUDE.md, memory, MCP logins and chat history are shared and untouched.</span></li>
     </ul>
@@ -449,6 +512,14 @@
       <p>No. Only the login is swapped: the claudeAiOauth entry in ~/.claude/.credentials.json and the oauthAccount entry in ~/.claude.json (plus one cached flag that Claude Code recreates by itself). Skills, CLAUDE.md, memory, MCP logins and chat history are shared by every account.</p>
       <h3>Can I see usage for each account?</h3>
       <p>Yes. The window and the status bar show the 5-hour session and 7-day weekly usage with reset times. The active account's numbers come from Claude Code itself. Accounts not in use are read live too: when a saved account's short-lived access token has expired, the app renews it exactly like Claude Code does and saves the new tokens back into that saved account. The account in use is left to Claude Code. If the server refuses a saved sign-in, the card says to sign in again.</p>
+      <h3>Does it show usage for accounts I'm not using?</h3>
+      <p>Yes. Accounts you are not using are read live: when a saved account's short-lived access token has expired, the app renews it the way Claude Code does and saves the new tokens back into that saved account, so its numbers are current instead of hours old. The account in use is left to Claude Code. If the server refuses a saved sign-in, that account shows Sign in again, and numbers older than 15 minutes are dimmed and labelled with their age.</p>
+      <h3>Will a plan upgrade, such as Pro to Max, show up?</h3>
+      <p>Yes, for accounts you are not using. When usage is refreshed (at most every 30 minutes per account), the app also re-checks the account's plan with its saved sign-in, so an upgrade such as Pro to Max 5x appears on its row without signing in again. The account in use keeps the plan details Claude Code itself maintains.</p>
+      <h3>Is it safe to switch while it is refreshing?</h3>
+      <p>Yes. A switch re-reads the saved account under Claude Code's own lock files, so if the app was renewing that same account a moment earlier, the switch uses the newest saved sign-in and never one that was already replaced. An end-to-end test with a fake token server covers renewal, token rotation, a switch during a slow renewal, ten fast switches and switching back.</p>
+      <h3>Is this allowed by Anthropic?</h3>
+      <p>CCSwitcherX is unofficial and not affiliated with Anthropic. It only switches between your own accounts on your own computer, and your prompts are still sent by the real Claude Code, not by CCSwitcherX. Anthropic's Consumer Terms do not allow you to share your login or make your account available to anyone else, so do not use it for shared accounts. To show usage and plan, the app reads them from Anthropic's servers with the saved sign-in and renews expired access tokens the way Claude Code does. Use it at your own risk and check Anthropic's terms for your plan.</p>
       <h3>Which platforms and versions does it support?</h3>
       <p>Windows 10 and 11 with Python 3.9 or newer (tested on Python 3.11). It works with the Claude Code command line and the Claude Code VS Code extension. macOS and Linux are not supported yet because the encryption uses Windows DPAPI.</p>
       <h3>Is CCSwitcherX an official Anthropic tool?</h3>

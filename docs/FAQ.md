@@ -1,6 +1,6 @@
 # FAQ
 
-Short answers about CCSwitcherX. The first 13 questions are the canonical set and their answers are kept word for word; the last six are answered from the code (version 1.2.0).
+Short answers about CCSwitcherX. The first 17 questions are the canonical set and their answers are kept word for word on the website; the last six are answered from the code (version 1.3.0).
 
 ## What is CCSwitcherX?
 
@@ -54,13 +54,29 @@ Yes. CCUsageX reads your Claude Code chat history and Claude Code's own usage re
 
 Nothing breaks. Claude Code keeps using whichever account was active last. Uninstall with scripts/uninstall.ps1; your saved logins are kept unless you ask to remove them.
 
+## Does it show usage for accounts I'm not using?
+
+Yes. Accounts you are not using are read live: when a saved account's short-lived access token has expired, the app renews it the way Claude Code does and saves the new tokens back into that saved account, so its numbers are current instead of hours old. The account in use is left to Claude Code. If the server refuses a saved sign-in, that account shows Sign in again, and numbers older than 15 minutes are dimmed and labelled with their age.
+
+## Will a plan upgrade, such as Pro to Max, show up?
+
+Yes, for accounts you are not using. When usage is refreshed (at most every 30 minutes per account), the app also re-checks the account's plan with its saved sign-in, so an upgrade such as Pro to Max 5x appears on its row without signing in again. The account in use keeps the plan details Claude Code itself maintains.
+
+## Is it safe to switch while it is refreshing?
+
+Yes. A switch re-reads the saved account under Claude Code's own lock files, so if the app was renewing that same account a moment earlier, the switch uses the newest saved sign-in and never one that was already replaced. An end-to-end test with a fake token server covers renewal, token rotation, a switch during a slow renewal, ten fast switches and switching back.
+
+## Is this allowed by Anthropic?
+
+CCSwitcherX is unofficial and not affiliated with Anthropic. It only switches between your own accounts on your own computer, and your prompts are still sent by the real Claude Code, not by CCSwitcherX. Anthropic's Consumer Terms do not allow you to share your login or make your account available to anyone else, so do not use it for shared accounts. To show usage and plan, the app reads them from Anthropic's servers with the saved sign-in and renews expired access tokens the way Claude Code does. Use it at your own risk and check Anthropic's terms for your plan.
+
 ## Where are my saved logins stored?
 
 Each saved login is one file in `~/.claude-accounts/profiles`, named by a 12-character id (`profile_id` in `src/claude_accounts_core.py`). The files are encrypted with Windows DPAPI for your Windows user (`protect` and `unprotect` in the same file). A copy of the login that was active before each switch is kept in `~/.claude-accounts/backups`; the newest 10 are kept. The folder is `%USERPROFILE%\.claude-accounts` unless the `CA_STORE` variable is set. Removing an account deletes its profile file, but not the backup copies, which go once they are rotated out. See [ARCHITECTURE.md](ARCHITECTURE.md#saved-login-storage).
 
 ## What does Refresh usage do?
 
-It updates the usage numbers in the window and in the status bar. For the active account it reads Claude Code's own cached numbers if they are less than 10 minutes old, and makes no network call. For each other account it makes one read-only request to `api.anthropic.com`. If that account's saved access token has expired, it first renews the token the way Claude Code does and saves the new tokens back into that saved account; the account in use is left to Claude Code. If the server refuses the saved sign-in, the card says to sign in again and the app waits 6 hours before asking again. Normal refreshes wait at least 3 minutes per account; the Refresh usage button skips that wait but still respects the 10-minute backoff after an error. Results go to `usage.json`, which holds percentages and times, not tokens. See `refresh_usage` in `src/claude_accounts_core.py`.
+It updates the usage numbers in the window and in the status bar. (From 1.3.0 the window shows the account in use as a large panel and every other account as a compact row sorted by how much room it has left.) For the active account it reads Claude Code's own cached numbers if they are less than 10 minutes old, and makes no network call. For each other account it makes one read-only request to `api.anthropic.com`. If that account's saved access token has expired, it first renews the token the way Claude Code does and saves the new tokens back into that saved account; the account in use is left to Claude Code. If the server refuses the saved sign-in, the card says to sign in again and the app waits 6 hours before asking again. Normal refreshes wait at least 3 minutes per account; the Refresh usage button skips that wait but still respects the 10-minute backoff after an error. Results go to `usage.json`, which holds percentages and times, not tokens. See `refresh_usage` in `src/claude_accounts_core.py`.
 
 ## Why does a card say "Sign-in expired" and what should I do?
 
